@@ -1,103 +1,94 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GameEngine, type GameState } from './game/GameEngine';
-import { HUD } from './components/HUD';
-import { type TowerType } from './game/Constants';
-import { Tower } from './game/Tower';
+import { GameEngine } from './game/GameEngine';
+import { GameHUD } from './components/GameHUD';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, TILE_SIZE, INITIAL_MONEY, INITIAL_LIVES } from './game/constants';
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
-  const [gameState, setGameState] = useState<GameState>({
-    money: 0,
-    lives: 0,
-    wave: 0,
-    isGameOver: false,
-    gameStarted: false,
-    waveActive: false,
-    isPaused: false
+
+  const [gameState, setGameState] = useState({
+    money: INITIAL_MONEY,
+    lives: INITIAL_LIVES,
+    wave: 1,
+    isGameOver: false
   });
-  const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
-  const [selectedTower, setSelectedTower] = useState<Tower | null>(null);
+
+  const [selectedTower, setSelectedTower] = useState('BASIC');
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Initialize Engine
-    const engine = new GameEngine(canvasRef.current, (newState) => {
-      setGameState(newState);
+    // Set Canvas Size
+    canvasRef.current.width = CANVAS_WIDTH;
+    canvasRef.current.height = CANVAS_HEIGHT;
+
+    const engine = new GameEngine(canvasRef.current, (state) => {
+      setGameState(s => ({ ...s, ...state }));
     });
+
     engineRef.current = engine;
 
     return () => {
-      // Cleanup if needed
+      engine.stop();
     };
   }, []);
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasClick = (e: React.MouseEvent) => {
     if (!engineRef.current || !canvasRef.current) return;
+    if (gameState.isGameOver) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    const clickedTower = engineRef.current.handleClick(x, y, selectedTowerType);
+    // Convert to Grid
+    const gridX = Math.floor(x / TILE_SIZE);
+    const gridY = Math.floor(y / TILE_SIZE);
 
-    if (clickedTower) {
-        setSelectedTower(clickedTower);
-        setSelectedTowerType(null); // Deselect placement tool when selecting a tower
-    } else {
-        // If we successfully placed a tower (or clicked empty space), clear selection
-        // Note: handleClick handles the placement logic internally if selectedTowerType is set
-        // But we might want to keep the tool active for multiple placements?
-        // For now let's keep it simple: click to place, stay selected to place more?
-        // Let's toggle off for better UX on mobile/simpler interaction
-        if (selectedTowerType) {
-             // If placement failed (e.g. no money), it returns null and we keep selection
-             // If placement succeeded, we might want to deselect or keep.
-             // Let's just check money in the engine or here.
-             // Actually engine.placeTower returns boolean.
-             // Refactoring handleClick to be more transparent might be better but for now:
-
-             // If we clicked empty space and had a tool selected:
-             if (!clickedTower) {
-                 // Check if we still have money for another one?
-                 // Or just keep it selected.
-             }
-        } else {
-            setSelectedTower(null);
-        }
-    }
+    engineRef.current.buildTower(gridX, gridY, selectedTower);
   };
 
-  const handleSell = () => {
-      if (engineRef.current && selectedTower) {
-          engineRef.current.sellTower(selectedTower);
-          setSelectedTower(null);
-      }
-  }
+  const handleRestart = () => {
+     if (engineRef.current && canvasRef.current) {
+         engineRef.current.stop();
+
+         const engine = new GameEngine(canvasRef.current!, (state) => {
+            setGameState(s => ({ ...s, ...state }));
+         });
+         engineRef.current = engine;
+         setGameState({
+            money: INITIAL_MONEY,
+            lives: INITIAL_LIVES,
+            wave: 1,
+            isGameOver: false
+         });
+     }
+  };
 
   return (
-    <div className="w-full h-screen bg-gray-950 flex items-center justify-center overflow-hidden">
-      <div className="relative shadow-2xl rounded-xl overflow-hidden border border-gray-800">
+    <div className="w-full h-screen bg-slate-950 flex items-center justify-center overflow-hidden relative">
+      <div className="relative shadow-2xl rounded-xl overflow-hidden border border-slate-800 bg-black">
         <canvas
           ref={canvasRef}
           className="cursor-crosshair block"
+          style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
           onClick={handleCanvasClick}
         />
 
-        <HUD
-          gameState={gameState}
-          engine={engineRef}
-          selectedTowerType={selectedTowerType}
-          onSelectTower={(type) => {
-              setSelectedTowerType(type);
-              setSelectedTower(null);
-          }}
-          selectedTower={selectedTower}
-          onSellTower={handleSell}
-          onDeselect={() => setSelectedTower(null)}
+        <GameHUD
+            money={gameState.money}
+            lives={gameState.lives}
+            wave={gameState.wave}
+            isGameOver={gameState.isGameOver}
+            selectedTower={selectedTower}
+            onSelectTower={setSelectedTower}
+            onRestart={handleRestart}
         />
       </div>
+
+      {/* Background Ambience */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900/50 via-slate-950 to-black pointer-events-none"></div>
     </div>
   );
 }

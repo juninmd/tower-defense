@@ -1,442 +1,307 @@
-import { Enemy } from './Enemy';
-import { Tower } from './Tower';
-import { Projectile } from './Projectile';
-import { Particle } from './Particle';
-import { Vector2 } from './Vector';
-import { GAME_WIDTH, GAME_HEIGHT, PATH_WAYPOINTS, TOWERS, type TowerType } from './Constants';
-import { type EnemyType } from '../types';
-import { soundManager } from './SoundManager';
-
-export interface GameState {
-  money: number;
-  lives: number;
-  wave: number;
-  isGameOver: boolean;
-  gameStarted: boolean; // Has the user clicked "Start Game"?
-  waveActive: boolean; // Are enemies spawning/alive?
-  isPaused: boolean;
-}
+import { Vector2 } from './Vector2';
+import { Enemy } from './entities/Enemy';
+import { Tower } from './entities/Tower';
+import { Projectile } from './entities/Projectile';
+import { Particle } from './entities/Particle';
+import { COLORS, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, TOWER_TYPES, INITIAL_MONEY, INITIAL_LIVES } from './constants';
 
 export class GameEngine {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
 
-  enemies: Enemy[] = [];
   towers: Tower[] = [];
+  enemies: Enemy[] = [];
   projectiles: Projectile[] = [];
   particles: Particle[] = [];
 
-  state: GameState = {
-    money: 300,
-    lives: 20,
-    wave: 1,
-    isGameOver: false,
-    gameStarted: false,
-    waveActive: false,
-    isPaused: false
-  };
+  path: Vector2[];
 
-  // private lastTime: number = 0;
-  private spawnTimer: number = 0;
-  private enemiesToSpawn: EnemyType[] = [];
-  private onStateChange: (state: GameState) => void;
+  money: number = INITIAL_MONEY;
+  lives: number = INITIAL_LIVES;
+  wave: number = 1;
+  isGameOver: boolean = false;
+  isStopped: boolean = false;
+  isPaused: boolean = false;
 
-  // Screen shake
-  private shakeIntensity: number = 0;
+  lastTime: number = 0;
 
-  constructor(canvas: HTMLCanvasElement, onStateChange: (state: GameState) => void) {
+  // Wave Logic
+  waveTimer: number = 0;
+  enemiesToSpawn: number = 0;
+  spawnTimer: number = 0;
+
+  onStateChange: (state: any) => void;
+
+  constructor(canvas: HTMLCanvasElement, onStateChange: (state: any) => void) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.onStateChange = onStateChange;
 
-    // Set canvas size
-    this.updateCanvasSize();
+    // Define a hardcoded path for now (Winding road)
+    this.path = this.generatePath();
 
-    // Listen for resize
-    window.addEventListener('resize', () => {
-        this.updateCanvasSize();
-    });
-
-    // Start loop
-    requestAnimationFrame(this.loop.bind(this));
-  }
-
-  private updateCanvasSize() {
-      // For a "responsive" canvas that keeps aspect ratio or fits window
-      // We will actually keep internal resolution fixed at GAME_WIDTH/GAME_HEIGHT for logic simplicity,
-      // but we can scale the canvas CSS or just adopt the window size if we want a truly larger map.
-      // Given "mapa maior", we likely want to see more.
-
-      // However, our path is defined in fixed coordinates.
-      // So we must stick to the fixed logic size, but ensure it scales via CSS.
-      // OR, we update GAME_WIDTH/HEIGHT to match window and scale path.
-
-      // The simplest robust approach for this codebase is:
-      // Fixed Logic Resolution (High Res), scaled via CSS to fit screen.
-
-      this.canvas.width = GAME_WIDTH;
-      this.canvas.height = GAME_HEIGHT;
-
-      // The CSS will handle the display size (width: 100%; height: 100%; object-fit: contain;)
-  }
-
-  startGame() {
-    this.state.gameStarted = true;
     this.startWave();
-    this.notifyState();
+
+    this.loop = this.loop.bind(this);
+    requestAnimationFrame(this.loop);
   }
 
-  togglePause() {
-    this.state.isPaused = !this.state.isPaused;
-    this.notifyState();
+  generatePath(): Vector2[] {
+    // Grid coordinates
+    const points = [
+        [0, 2], [5, 2], [5, 8], [12, 8], [12, 4], [18, 4], [18, 12], [8, 12], [8, 14], [22, 14], [22, 8], [24, 8]
+    ];
+    return points.map(p => new Vector2(p[0] * TILE_SIZE + TILE_SIZE/2, p[1] * TILE_SIZE + TILE_SIZE/2));
   }
 
   startWave() {
-    this.state.waveActive = true;
-    this.enemiesToSpawn = this.generateWave(this.state.wave);
-    this.spawnTimer = 0;
-    this.notifyState();
+      this.enemiesToSpawn = 5 + Math.floor(this.wave * 2.5);
+      this.spawnTimer = 0;
   }
 
-  generateWave(waveNum: number): EnemyType[] {
-    const enemies: EnemyType[] = [];
-    const count = 5 + Math.floor(waveNum * 1.5);
-
-    for (let i = 0; i < count; i++) {
-        if (waveNum % 10 === 0 && i === 0) {
-            enemies.push('BOSS');
-        } else if (waveNum % 5 === 0 && i < waveNum / 3) {
-             enemies.push('TANK');
-             enemies.push('ARMORED');
-        } else if (waveNum > 3 && i % 4 === 0) {
-            enemies.push('SWARM');
-            enemies.push('SWARM');
-            enemies.push('SWARM');
-        } else if (waveNum > 2 && i % 3 === 0) {
-            enemies.push('FAST');
-        } else {
-            enemies.push('NORMAL');
-        }
-    }
-    return enemies;
+  spawnEnemy() {
+      const health = 20 + (this.wave * 15);
+      const speed = 1.0 + (this.wave * 0.1);
+      const value = 15;
+      this.enemies.push(new Enemy(this.path, health, speed, value));
   }
 
-  placeTower(pos: Vector2, type: TowerType): boolean {
-    const cost = TOWERS[type].cost;
-    if (this.state.money >= cost) {
-      // Check collision with path (simple check: distance to path segments)
-      // For now, just check if it's too close to other towers
+  buildTower(gridX: number, gridY: number, typeKey: string): boolean {
+      if (this.isGameOver) return false;
+
+      const type = TOWER_TYPES[typeKey as keyof typeof TOWER_TYPES];
+      if (this.money < type.cost) return false;
+
+      const pos = new Vector2(gridX * TILE_SIZE + TILE_SIZE/2, gridY * TILE_SIZE + TILE_SIZE/2);
+
+      // Check collision with path
+      // Simple check: is this tile in the path segments?
+      // A more robust way is distance to line segments, but let's check distance to path points for the corners
+      // Actually, since path is grid based, we can just check if the point is on the line.
+      // For now, let's just check against existing towers
       for (const t of this.towers) {
-        if (pos.distanceTo(t.position) < 40) return false;
+          if (t.position.distance(pos) < 10) return false;
       }
 
-      // Check collision with path (very basic box check around waypoints)
-      // Ideally we would do line segment distance checks
-      for (let i=0; i<PATH_WAYPOINTS.length-1; i++) {
-           const p1 = PATH_WAYPOINTS[i];
-           const p2 = PATH_WAYPOINTS[i+1];
-           const dist = this.pointToSegmentDistance(pos, p1, p2);
-           if (dist < 30) return false; // Too close to path
-      }
+      // Check distance to path (simplified)
+      // If we drag a circle along the path, does it hit?
+      // Quick hack: Don't build if close to any path node. Better: Check segments.
+      // Since it's a grid game, let's just assume we can build anywhere except ON the path line.
 
-      this.state.money -= cost;
-      this.towers.push(new Tower(pos, type));
+      // Let's implement a smarter check:
+      // Loop through path segments
+      let onPath = false;
+      for(let i=0; i<this.path.length-1; i++) {
+          const p1 = this.path[i];
+          const p2 = this.path[i+1];
 
-      // Visual feedback
-      this.createExplosion(pos, TOWERS[type].color, 10, 2);
+          // Check if point is on segment
+          const minX = Math.min(p1.x, p2.x) - TILE_SIZE/2;
+          const maxX = Math.max(p1.x, p2.x) + TILE_SIZE/2;
+          const minY = Math.min(p1.y, p2.y) - TILE_SIZE/2;
+          const maxY = Math.max(p1.y, p2.y) + TILE_SIZE/2;
 
-      this.notifyState();
-      return true;
-    }
-    return false;
-  }
-
-  sellTower(tower: Tower) {
-      this.state.money += Math.floor(TOWERS[tower.type].cost * 0.5);
-      this.createExplosion(tower.position, '#F87171', 8, 1.5);
-      this.towers = this.towers.filter(t => t.id !== tower.id);
-      this.notifyState();
-  }
-
-  getTowerAt(pos: Vector2): Tower | null {
-      for (const t of this.towers) {
-          if (pos.distanceTo(t.position) < 20) return t;
-      }
-      return null;
-  }
-
-  private pointToSegmentDistance(p: Vector2, v: Vector2, w: Vector2): number {
-    const l2 = v.distanceTo(w) * v.distanceTo(w);
-    if (l2 == 0) return p.distanceTo(v);
-    let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
-    t = Math.max(0, Math.min(1, t));
-    const projection = new Vector2(
-        v.x + t * (w.x - v.x),
-        v.y + t * (w.y - v.y)
-    );
-    return p.distanceTo(projection);
-  }
-
-  private loop() {
-    // Delta time calculation
-    // const deltaTime = (timestamp - this.lastTime) / 1000;
-    // this.lastTime = timestamp;
-
-    if (this.state.gameStarted && !this.state.isGameOver && !this.state.isPaused) {
-      this.update();
-    }
-    this.draw();
-
-    requestAnimationFrame(this.loop.bind(this));
-  }
-
-  private update() {
-    // Spawning
-    if (this.state.waveActive) {
-      if (this.enemiesToSpawn.length > 0) {
-        this.spawnTimer++;
-        if (this.spawnTimer > 60) { // Spawn every 60 frames approx
-          const type = this.enemiesToSpawn.shift()!;
-          this.enemies.push(new Enemy(type));
-          this.spawnTimer = 0;
-        }
-      } else if (this.enemies.length === 0) {
-        // Wave complete
-        this.state.waveActive = false;
-        this.state.wave++;
-        this.notifyState(); // UI can show "Next Wave" button
-      }
-    }
-
-    // Update Enemies
-    this.enemies.forEach(e => e.update());
-
-    // Check lives and removal
-    for (let i = this.enemies.length - 1; i >= 0; i--) {
-      if (this.enemies[i].reachedEnd) {
-        this.state.lives--;
-        this.shakeIntensity = 10; // Shake when taking damage
-        soundManager.playHit();
-        this.enemies.splice(i, 1);
-        this.notifyState();
-        if (this.state.lives <= 0) {
-          this.state.isGameOver = true;
-          soundManager.playGameOver();
-          this.notifyState();
-        }
-      }
-    }
-
-    // Update Towers
-    this.towers.forEach(t => {
-      const target = t.update(this.enemies);
-
-      // Special Logic for Towers that return target but handle things differently
-      if (target) {
-          if (t.type === 'LASER') {
-              // Laser damage is handled in Tower.update (or we could do it here)
-              // We just need to draw the laser beam later.
-              // We can add a "Laser Particle" or just store the beam state?
-              // Simplest: Add a transient particle/effect for this frame
-              // But for now, we will handle visual in draw() by checking targetId
-              // Sound?
-              if (Math.random() < 0.1) soundManager.playShoot(t.type);
-          } else {
-            // Standard Projectile
-            const isSplash = t.type === 'SPLASH';
-            const splashRadius = isSplash ? 60 : 0;
-            this.projectiles.push(new Projectile(t.position, target.position, t.damage, t.color, isSplash, splashRadius));
-            soundManager.playShoot(t.type);
-            // Add shoot particle
-            this.createExplosion(t.position, t.color, 3, 0.5);
+          if (pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY) {
+              onPath = true;
+              break;
           }
       }
-    });
 
-    // Update Projectiles
-    this.projectiles.forEach(p => p.update());
+      if (onPath) return false;
 
-    // Collision Detection (Projectile vs Enemy)
-    for (let i = this.projectiles.length - 1; i >= 0; i--) {
-      const p = this.projectiles[i];
-      if (!p.active) {
-        this.projectiles.splice(i, 1);
-        continue;
+      this.money -= type.cost;
+      this.towers.push(new Tower(pos, type));
+      this.createParticles(pos, '#ffffff', 5);
+      this.notifyState();
+      return true;
+  }
+
+  createParticles(pos: Vector2, color: string, count: number) {
+      for(let i=0; i<count; i++) {
+          this.particles.push(new Particle(pos.clone(), color));
       }
+  }
 
-      let hit = false;
-      for (const e of this.enemies) {
-        if (e.isDead) continue;
-        if (p.position.distanceTo(e.position) < e.radius + 5) {
+  update(dt: number) {
+    if (this.isGameOver || this.isPaused) return;
+
+    // Spawning Logic
+    if (this.enemiesToSpawn > 0) {
+        this.spawnTimer -= dt * 16.6;
+        if (this.spawnTimer <= 0) {
+            this.spawnEnemy();
+            this.enemiesToSpawn--;
+            this.spawnTimer = 1000 - Math.min(800, this.wave * 50); // Faster spawns later
+        }
+    } else if (this.enemies.length === 0) {
+        // Wave clear
+        this.waveTimer += dt * 16.6;
+        if (this.waveTimer > 2000) { // 2 seconds between waves
+            this.wave++;
+            this.startWave();
+            this.waveTimer = 0;
+            this.notifyState();
+        }
+    }
+
+    // Entities Update
+    this.enemies.forEach(e => e.update(dt));
+    this.towers.forEach(t => t.gameUpdate(dt, this.enemies, (p) => this.projectiles.push(p)));
+    this.projectiles.forEach(p => p.update());
+    this.particles.forEach(p => p.update());
+
+    // Collision: Projectile vs Enemy
+    for (const p of this.projectiles) {
+        if (p.markedForDeletion) {
+             // It hit something or expired
+             // Check if it hit an enemy (distance check was done in projectile update but let's re-verify trigger)
+             // Actually Projectile marks itself for deletion on hit.
+             // We need to apply damage here if it hit.
+
+             // Let's refine Projectile logic:
+             // Projectile tracks target. If close, mark delete.
+             // Here we check: if marked for deletion, was it close to target?
+
+             // Simplify: Let's do collision check here instead of inside Projectile.
+        }
+    }
+
+    // Better Collision Loop
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+        const p = this.projectiles[i];
+
+        let hit = false;
+
+        // Check collision with target specifically first
+        if (p.target && !p.target.markedForDeletion && p.position.distance(p.target.position) < p.target.radius + p.radius) {
             hit = true;
+        }
+        // If splash, it might just explode at destination
+        else if (p.targetPos && p.position.distance(p.targetPos) < 5) { // close enough
+            hit = true;
+        }
 
-            if (p.isSplash) {
-                // Splash Damage
-                this.enemies.forEach(nearby => {
-                    if (nearby.isDead) return;
-                    if (nearby.position.distanceTo(p.position) <= p.splashRadius) {
-                        // Falloff damage? No, full damage for now.
-                        nearby.takeDamage(p.damage);
+        if (hit) {
+            p.markedForDeletion = true;
+            this.createParticles(p.position, p.color, 3);
+
+            if (p.splashRadius > 0) {
+                // AoE
+                this.enemies.forEach(e => {
+                    if (e.position.distance(p.position) <= p.splashRadius) {
+                        e.takeDamage(p.damage);
                     }
                 });
-                this.createExplosion(p.position, p.color, 20, 1.5); // Bigger explosion
-                soundManager.playExplosion();
+                // Visual shockwave
+                 this.createParticles(p.position, p.color, 8);
             } else {
                 // Single Target
-                e.takeDamage(p.damage);
-                this.createExplosion(p.position, p.color, 5, 0.5);
+                if (p.target) {
+                    p.target.takeDamage(p.damage);
+                }
             }
-            break;
         }
-      }
-
-      if (hit) {
-        this.projectiles.splice(i, 1);
-      }
     }
 
-    // Cleanup Dead Enemies
+    // Cleanup Dead Entities
     for (let i = this.enemies.length - 1; i >= 0; i--) {
-      if (this.enemies[i].isDead) {
-        this.state.money += this.enemies[i].reward;
-        this.createExplosion(this.enemies[i].position, '#FFF', 15, 1.5);
-        soundManager.playExplosion();
-        this.shakeIntensity = Math.min(this.shakeIntensity + 2, 10);
-        this.enemies.splice(i, 1);
-        this.notifyState();
-      }
+        const e = this.enemies[i];
+        // Check if reached end
+        if (e.pathIndex >= e.path.length) {
+            this.lives--;
+            e.markedForDeletion = true;
+            this.notifyState();
+            if (this.lives <= 0) {
+                this.isGameOver = true;
+                this.notifyState();
+            }
+        }
+
+        if (e.markedForDeletion) {
+            if (e.health <= 0) {
+                this.money += e.value;
+                this.createParticles(e.position, COLORS.accent, 5);
+                this.notifyState();
+            }
+            this.enemies.splice(i, 1);
+        }
     }
 
-    // Update Particles
-    this.particles.forEach(p => p.update());
-    this.particles = this.particles.filter(p => p.life > 0);
-
-    // Decay shake
-    if (this.shakeIntensity > 0) {
-      this.shakeIntensity *= 0.9;
-      if (this.shakeIntensity < 0.5) this.shakeIntensity = 0;
-    }
+    this.projectiles = this.projectiles.filter(p => !p.markedForDeletion);
+    this.particles = this.particles.filter(p => !p.markedForDeletion);
   }
 
-  private createExplosion(pos: Vector2, color: string, count: number, scale: number = 1) {
-    for (let i = 0; i < count; i++) {
-      this.particles.push(new Particle(pos, color, scale, scale));
+  draw() {
+    const ctx = this.ctx;
+    ctx.fillStyle = COLORS.background;
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Grid (Subtle)
+    ctx.strokeStyle = '#1e1e2e';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(let x=0; x<=MAP_WIDTH; x++) {
+        ctx.moveTo(x*TILE_SIZE, 0);
+        ctx.lineTo(x*TILE_SIZE, this.canvas.height);
     }
-  }
-
-  private draw() {
-    this.ctx.save();
-
-    // Apply screenshake
-    if (this.shakeIntensity > 0) {
-      const dx = (Math.random() - 0.5) * this.shakeIntensity;
-      const dy = (Math.random() - 0.5) * this.shakeIntensity;
-      this.ctx.translate(dx, dy);
+    for(let y=0; y<=MAP_HEIGHT; y++) {
+        ctx.moveTo(0, y*TILE_SIZE);
+        ctx.lineTo(this.canvas.width, y*TILE_SIZE);
     }
+    ctx.stroke();
 
-    // Clear
-    this.ctx.fillStyle = '#0f172a'; // Deep blue/slate bg
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Draw Grid
-    this.drawGrid();
-
-    // Draw Path with Glow
-    this.ctx.shadowBlur = 15;
-    this.ctx.shadowColor = '#3b82f6'; // Blue glow
-    this.ctx.beginPath();
-    this.ctx.moveTo(PATH_WAYPOINTS[0].x, PATH_WAYPOINTS[0].y);
-    for (let i = 1; i < PATH_WAYPOINTS.length; i++) {
-      this.ctx.lineTo(PATH_WAYPOINTS[i].x, PATH_WAYPOINTS[i].y);
+    // Path
+    ctx.strokeStyle = COLORS.path;
+    ctx.lineWidth = TILE_SIZE * 0.8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    if (this.path.length > 0) {
+        ctx.moveTo(this.path[0].x, this.path[0].y);
+        for(let i=1; i<this.path.length; i++) {
+            ctx.lineTo(this.path[i].x, this.path[i].y);
+        }
     }
-    this.ctx.lineWidth = 20;
-    this.ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)'; // Faint wide path
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
-    this.ctx.stroke();
+    ctx.stroke();
 
-    this.ctx.lineWidth = 3;
-    this.ctx.strokeStyle = '#60a5fa'; // Bright center
-    this.ctx.stroke();
-
-    this.ctx.shadowBlur = 0; // Reset for other items
+    // Path Border (Neon Glow)
+    ctx.strokeStyle = COLORS.pathBorder; //COLORS.accent;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 0; //10;
+    //ctx.shadowColor = COLORS.accent;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // Draw Entities
-    this.towers.forEach(t => {
-        t.draw(this.ctx);
-        // Draw Laser Beam if active
-        if (t.type === 'LASER' && t.targetId) {
-            const target = this.enemies.find(e => e.id === t.targetId);
-            if (target && !target.isDead) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(t.position.x, t.position.y);
-                this.ctx.lineTo(target.position.x, target.position.y);
-                this.ctx.lineWidth = 4;
-                this.ctx.strokeStyle = t.color; // Fuchsia
-                this.ctx.lineCap = 'round';
-                this.ctx.stroke();
-
-                this.ctx.lineWidth = 1;
-                this.ctx.strokeStyle = '#fff';
-                this.ctx.stroke();
-
-                // Impact spark
-                this.createExplosion(target.position, t.color, 1, 0.5);
-            }
-        }
-    });
-    this.enemies.forEach(e => e.draw(this.ctx));
-
-    // Glowing projectiles
-    this.ctx.shadowBlur = 10;
-    this.projectiles.forEach(p => {
-        this.ctx.shadowColor = p.color;
-        p.draw(this.ctx)
-    });
-    this.ctx.shadowBlur = 0;
-
-    this.particles.forEach(p => p.draw(this.ctx));
-
-    this.ctx.restore();
+    this.towers.forEach(t => t.draw(ctx));
+    this.enemies.forEach(e => e.draw(ctx));
+    this.projectiles.forEach(p => p.draw(ctx));
+    this.particles.forEach(p => p.draw(ctx));
   }
 
-  private drawGrid() {
-      this.ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
-      this.ctx.lineWidth = 1;
-
-      const cellSize = 40;
-      for (let x = 0; x <= this.canvas.width; x += cellSize) {
-          this.ctx.beginPath();
-          this.ctx.moveTo(x, 0);
-          this.ctx.lineTo(x, this.canvas.height);
-          this.ctx.stroke();
-      }
-
-      for (let y = 0; y <= this.canvas.height; y += cellSize) {
-          this.ctx.beginPath();
-          this.ctx.moveTo(0, y);
-          this.ctx.lineTo(this.canvas.width, y);
-          this.ctx.stroke();
-      }
+  stop() {
+      this.isStopped = true;
   }
 
-  private notifyState() {
-      // Create a copy to trigger react updates
-      this.onStateChange({ ...this.state });
+  loop(timestamp: number) {
+    if (this.isStopped) return;
+
+    if (!this.lastTime) this.lastTime = timestamp;
+    const dt = (timestamp - this.lastTime) / 16.6; // Normalize to roughly 1 frame
+    this.lastTime = timestamp;
+
+    this.update(dt);
+    this.draw();
+
+    requestAnimationFrame(this.loop);
   }
 
-  // Method to handle clicks from React
-  handleClick(x: number, y: number, selectedTowerType: TowerType | null): Tower | null {
-      const clickPos = new Vector2(x, y);
-
-      // Check if clicked on existing tower
-      const existingTower = this.getTowerAt(clickPos);
-      if (existingTower) return existingTower;
-
-      // Else try to place tower if one is selected
-      if (selectedTowerType) {
-          this.placeTower(clickPos, selectedTowerType);
-      }
-      return null;
+  notifyState() {
+      this.onStateChange({
+          money: this.money,
+          lives: this.lives,
+          wave: this.wave,
+          isGameOver: this.isGameOver
+      });
   }
 }

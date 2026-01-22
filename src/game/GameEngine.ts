@@ -3,6 +3,7 @@ import { Enemy } from './entities/Enemy';
 import { Tower } from './entities/Tower';
 import { Projectile } from './entities/Projectile';
 import { Particle } from './entities/Particle';
+import { soundManager } from './SoundManager';
 import { COLORS, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, TOWER_TYPES, INITIAL_MONEY, INITIAL_LIVES } from './constants';
 
 export class GameEngine {
@@ -112,6 +113,7 @@ export class GameEngine {
       this.money -= type.cost;
       this.towers.push(new Tower(pos, type));
       this.createParticles(pos, '#ffffff', 5);
+      soundManager.playShoot('BASIC'); // Reusing a sound for build confirmation
       this.notifyState();
       return true;
   }
@@ -146,7 +148,18 @@ export class GameEngine {
 
     // Entities Update
     this.enemies.forEach(e => e.update(dt));
-    this.towers.forEach(t => t.gameUpdate(dt, this.enemies, (p) => this.projectiles.push(p)));
+    this.towers.forEach(t => t.gameUpdate(dt, this.enemies, (p) => {
+        this.projectiles.push(p);
+
+        // Find tower type key for sound
+        let typeKey = 'BASIC';
+        for(const [key, val] of Object.entries(TOWER_TYPES)) {
+             if (val.color === t.type.color && val.damage === t.type.damage) {
+                 typeKey = key;
+             }
+        }
+        soundManager.playShoot(typeKey as any);
+    }));
     this.projectiles.forEach(p => p.update());
     this.particles.forEach(p => p.update());
 
@@ -184,6 +197,7 @@ export class GameEngine {
         if (hit) {
             p.markedForDeletion = true;
             this.createParticles(p.position, p.color, 3);
+            soundManager.playExplosion();
 
             if (p.splashRadius > 0) {
                 // AoE
@@ -221,6 +235,7 @@ export class GameEngine {
             if (e.health <= 0) {
                 this.money += e.value;
                 this.createParticles(e.position, COLORS.accent, 5);
+                soundManager.playMoney();
                 this.notifyState();
             }
             this.enemies.splice(i, 1);
@@ -265,12 +280,22 @@ export class GameEngine {
     ctx.stroke();
 
     // Path Border (Neon Glow)
-    ctx.strokeStyle = COLORS.pathBorder; //COLORS.accent;
+    ctx.strokeStyle = '#38bdf8'; // Cyan
     ctx.lineWidth = 2;
-    ctx.shadowBlur = 0; //10;
-    //ctx.shadowColor = COLORS.accent;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#38bdf8';
     ctx.stroke();
     ctx.shadowBlur = 0;
+
+    // Background Grid Glow (Vignette style)
+    const gradient = ctx.createRadialGradient(
+        this.canvas.width/2, this.canvas.height/2, 100,
+        this.canvas.width/2, this.canvas.height/2, 600
+    );
+    gradient.addColorStop(0, 'rgba(0,0,0,0)');
+    gradient.addColorStop(1, 'rgba(0,0,0,0.6)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw Entities
     this.towers.forEach(t => t.draw(ctx));

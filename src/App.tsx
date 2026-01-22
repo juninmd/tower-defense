@@ -11,10 +11,13 @@ function App() {
     money: INITIAL_MONEY,
     lives: INITIAL_LIVES,
     wave: 1,
-    isGameOver: false
+    isGameOver: false,
+    isPaused: false,
+    timeScale: 1
   });
 
-  const [selectedTower, setSelectedTower] = useState('BASIC');
+  const [selectedTower, setSelectedTower] = useState<string | null>(null);
+  const [selectedMapTowerPos, setSelectedMapTowerPos] = useState<{x: number, y: number} | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -24,7 +27,8 @@ function App() {
     canvasRef.current.height = CANVAS_HEIGHT;
 
     const engine = new GameEngine(canvasRef.current, (state) => {
-      setGameState(s => ({ ...s, ...state }));
+      // Avoid excessive re-renders by checking specific changes if needed, but simple merge is fine for now
+      setGameState(s => ({ ...s, ...state, isPaused: engine.isPaused, timeScale: engine.timeScale }));
     });
 
     engineRef.current = engine;
@@ -46,7 +50,23 @@ function App() {
     const gridX = Math.floor(x / TILE_SIZE);
     const gridY = Math.floor(y / TILE_SIZE);
 
-    engineRef.current.buildTower(gridX, gridY, selectedTower);
+    if (selectedTower) {
+        // Build mode
+        const success = engineRef.current.buildTower(gridX, gridY, selectedTower);
+        if (success) {
+            // Deselect after build? Or keep selected for multi-build. Let's keep for multi-build but clear map selection.
+            setSelectedMapTowerPos(null);
+        }
+    } else {
+        // Select mode
+        // Check if there is a tower here
+        // Simple distance check logic is inside engine usually, but we can iterate roughly
+        // Better to ask engine "is there a tower at gridX, gridY?"
+        // Since we don't have that method, let's implement a rough check or add method to engine.
+        // Actually we can just keep track of map position.
+        setSelectedMapTowerPos({ x: gridX, y: gridY });
+        // Ideally we should visually indicate selection on map
+    }
   };
 
   const handleRestart = () => {
@@ -61,14 +81,38 @@ function App() {
             money: INITIAL_MONEY,
             lives: INITIAL_LIVES,
             wave: 1,
-            isGameOver: false
+            isGameOver: false,
+            isPaused: false,
+            timeScale: 1
          });
      }
   };
 
+  const handleTogglePause = () => {
+      if (engineRef.current) {
+          engineRef.current.isPaused = !engineRef.current.isPaused;
+          setGameState(s => ({ ...s, isPaused: engineRef.current!.isPaused }));
+      }
+  };
+
+  const handleToggleSpeed = () => {
+      if (engineRef.current) {
+          engineRef.current.timeScale = engineRef.current.timeScale === 1 ? 2 : 1;
+          setGameState(s => ({ ...s, timeScale: engineRef.current!.timeScale }));
+      }
+  };
+
+  const handleSell = () => {
+      if (engineRef.current && selectedMapTowerPos) {
+          if (engineRef.current.sellTower(selectedMapTowerPos.x, selectedMapTowerPos.y)) {
+              setSelectedMapTowerPos(null);
+          }
+      }
+  };
+
   return (
-    <div className="w-full h-screen bg-slate-950 flex items-center justify-center overflow-hidden relative">
-      <div className="relative shadow-2xl rounded-xl overflow-hidden border border-slate-800 bg-black">
+    <div className="w-full h-screen bg-slate-900 flex items-center justify-center overflow-hidden relative">
+      <div className="relative shadow-2xl rounded-xl overflow-hidden border border-slate-700 bg-slate-800">
         <canvas
           ref={canvasRef}
           className="cursor-crosshair block"
@@ -81,14 +125,20 @@ function App() {
             lives={gameState.lives}
             wave={gameState.wave}
             isGameOver={gameState.isGameOver}
+            isPaused={gameState.isPaused}
+            timeScale={gameState.timeScale}
             selectedTower={selectedTower}
-            onSelectTower={setSelectedTower}
+            hasSelectedTowerOnMap={!!selectedMapTowerPos}
+            onSelectTower={(t) => {
+                setSelectedTower(t);
+                setSelectedMapTowerPos(null); // Clear map selection when picking tool
+            }}
             onRestart={handleRestart}
+            onTogglePause={handleTogglePause}
+            onToggleSpeed={handleToggleSpeed}
+            onSellTower={handleSell}
         />
       </div>
-
-      {/* Background Ambience */}
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900/50 via-slate-950 to-black pointer-events-none"></div>
     </div>
   );
 }

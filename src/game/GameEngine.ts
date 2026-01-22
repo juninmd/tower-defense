@@ -23,6 +23,7 @@ export class GameEngine {
   isGameOver: boolean = false;
   isStopped: boolean = false;
   isPaused: boolean = false;
+  timeScale: number = 1;
 
   lastTime: number = 0;
 
@@ -116,6 +117,21 @@ export class GameEngine {
       soundManager.playShoot('BASIC'); // Reusing a sound for build confirmation
       this.notifyState();
       return true;
+  }
+
+  sellTower(gridX: number, gridY: number): boolean {
+      const pos = new Vector2(gridX * TILE_SIZE + TILE_SIZE/2, gridY * TILE_SIZE + TILE_SIZE/2);
+
+      const index = this.towers.findIndex(t => t.position.distance(pos) < 10);
+      if (index !== -1) {
+          const tower = this.towers[index];
+          this.money += Math.floor(tower.type.cost * 0.7); // 70% refund
+          this.towers.splice(index, 1);
+          soundManager.playMoney();
+          this.notifyState();
+          return true;
+      }
+      return false;
   }
 
   createParticles(pos: Vector2, color: string, count: number) {
@@ -251,8 +267,8 @@ export class GameEngine {
     ctx.fillStyle = COLORS.background;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Grid (Subtle)
-    ctx.strokeStyle = '#1e1e2e';
+    // Grid
+    ctx.strokeStyle = COLORS.grid;
     ctx.lineWidth = 1;
     ctx.beginPath();
     for(let x=0; x<=MAP_WIDTH; x++) {
@@ -265,7 +281,7 @@ export class GameEngine {
     }
     ctx.stroke();
 
-    // Path
+    // Path (Clean)
     ctx.strokeStyle = COLORS.path;
     ctx.lineWidth = TILE_SIZE * 0.8;
     ctx.lineCap = 'round';
@@ -279,23 +295,10 @@ export class GameEngine {
     }
     ctx.stroke();
 
-    // Path Border (Neon Glow)
-    ctx.strokeStyle = '#38bdf8'; // Cyan
+    // Path Border (Solid)
+    ctx.strokeStyle = COLORS.pathBorder;
     ctx.lineWidth = 2;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#38bdf8';
     ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Background Grid Glow (Vignette style)
-    const gradient = ctx.createRadialGradient(
-        this.canvas.width/2, this.canvas.height/2, 100,
-        this.canvas.width/2, this.canvas.height/2, 600
-    );
-    gradient.addColorStop(0, 'rgba(0,0,0,0)');
-    gradient.addColorStop(1, 'rgba(0,0,0,0.6)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw Entities
     this.towers.forEach(t => t.draw(ctx));
@@ -312,10 +315,15 @@ export class GameEngine {
     if (this.isStopped) return;
 
     if (!this.lastTime) this.lastTime = timestamp;
-    const dt = (timestamp - this.lastTime) / 16.6; // Normalize to roughly 1 frame
+    const rawDt = (timestamp - this.lastTime);
     this.lastTime = timestamp;
 
-    this.update(dt);
+    // Use a fixed max dt to prevent spiral of death on lag spikes
+    const dt = Math.min(rawDt, 50) / 16.6 * this.timeScale;
+
+    if (!this.isPaused) {
+        this.update(dt);
+    }
     this.draw();
 
     requestAnimationFrame(this.loop);

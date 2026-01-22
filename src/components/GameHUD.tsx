@@ -1,25 +1,33 @@
 import React from 'react';
 import { TOWER_TYPES } from '../game/constants';
-import { Shield, RotateCcw } from 'lucide-react';
+import { Shield, RotateCcw, Pause, Play, FastForward, Trash2 } from 'lucide-react';
 
 interface GameHUDProps {
   money: number;
   lives: number;
   wave: number;
   isGameOver: boolean;
-  selectedTower: string;
-  onSelectTower: (key: string) => void;
+  isPaused: boolean;
+  timeScale: number;
+  selectedTower: string | null;
+  hasSelectedTowerOnMap: boolean;
+  onSelectTower: (key: string | null) => void;
   onRestart: () => void;
+  onTogglePause: () => void;
+  onToggleSpeed: () => void;
+  onSellTower: () => void;
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
-    money, lives, wave, isGameOver, selectedTower, onSelectTower, onRestart
+    money, lives, wave, isGameOver, isPaused, timeScale,
+    selectedTower, hasSelectedTowerOnMap,
+    onSelectTower, onRestart, onTogglePause, onToggleSpeed, onSellTower
 }) => {
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4">
 
-      {/* Top Bar: Stats */}
-      <div className="flex justify-between items-center bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-slate-700 shadow-2xl pointer-events-auto">
+      {/* Top Bar: Stats & Controls */}
+      <div className="flex justify-between items-center bg-slate-800/90 backdrop-blur-md p-4 rounded-xl border border-slate-600 shadow-xl pointer-events-auto">
         <div className="flex gap-8">
             <div className="flex items-center gap-2 text-rose-500">
                 <Shield size={24} />
@@ -32,7 +40,16 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </div>
 
         <div className="text-slate-200 font-bold text-xl tracking-widest">
-            WAVE <span className="text-cyan-400 text-2xl">{wave}</span>
+            WAVE <span className="text-sky-400 text-2xl">{wave}</span>
+        </div>
+
+        <div className="flex gap-2">
+            <button onClick={onTogglePause} className="p-2 rounded bg-slate-700 hover:bg-slate-600 text-white transition">
+                {isPaused ? <Play size={20} /> : <Pause size={20} />}
+            </button>
+            <button onClick={onToggleSpeed} className={`p-2 rounded bg-slate-700 hover:bg-slate-600 text-white transition ${timeScale > 1 ? 'text-sky-400' : ''}`}>
+                <FastForward size={20} />
+            </button>
         </div>
       </div>
 
@@ -51,7 +68,18 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       )}
 
       {/* Bottom Bar: Tower Selection */}
-      <div className="flex justify-center gap-4 pointer-events-auto pb-4">
+      <div className="flex justify-center items-end gap-4 pointer-events-auto pb-4">
+
+        {hasSelectedTowerOnMap && (
+            <button
+                onClick={onSellTower}
+                className="mb-4 bg-rose-600 hover:bg-rose-500 text-white p-4 rounded-xl font-bold shadow-lg flex flex-col items-center gap-2 border-2 border-rose-400 transition transform hover:scale-105"
+            >
+                <Trash2 size={24} />
+                <span>SELL (70%)</span>
+            </button>
+        )}
+
         {Object.entries(TOWER_TYPES).map(([key, tower]) => {
             const isSelected = selectedTower === key;
             const canAfford = money >= tower.cost;
@@ -59,12 +87,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             return (
                 <button
                     key={key}
-                    onClick={() => onSelectTower(key)}
-                    disabled={!canAfford}
+                    onClick={() => onSelectTower(key === selectedTower ? null : key)}
+                    disabled={!canAfford && !isSelected}
                     className={`
                         relative group flex flex-col items-center p-3 rounded-xl border-2 transition-all w-24
-                        ${isSelected ? 'bg-slate-800 border-cyan-400 shadow-[0_0_15px_rgba(56,189,248,0.3)] scale-110 -translate-y-2' : 'bg-slate-900/80 border-slate-700 hover:border-slate-500'}
-                        ${!canAfford ? 'opacity-50 grayscale' : ''}
+                        ${isSelected ? 'bg-slate-700 border-sky-400 shadow-lg scale-110 -translate-y-2' : 'bg-slate-800/90 border-slate-600 hover:border-slate-400'}
+                        ${!canAfford && !isSelected ? 'opacity-50 grayscale' : ''}
                     `}
                 >
                     <div className="w-8 h-8 rounded-full mb-2 shadow-lg" style={{ backgroundColor: tower.color }}></div>

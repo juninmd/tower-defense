@@ -6,13 +6,14 @@ export const CANVAS_WIDTH = MAP_WIDTH * TILE_SIZE;
 export const CANVAS_HEIGHT = MAP_HEIGHT * TILE_SIZE;
 
 export const COLORS = {
-  background: '#0a0a12',
-  path: '#1a1a24',
-  pathBorder: '#2a2a35',
-  towerBase: '#334155',
-  accent: '#38bdf8',
+  background: '#1e293b', // Slate 800
+  grid: '#334155', // Slate 700
+  path: '#0f172a', // Slate 900
+  pathBorder: '#475569', // Slate 600
+  towerBase: '#cbd5e1', // Slate 300
+  accent: '#0ea5e9', // Sky 500
   danger: '#ef4444',
-  success: '#22c55e',
+  success: '#10b981',
   warning: '#f59e0b',
   text: '#f8fafc',
 };
@@ -24,7 +25,7 @@ export const TOWER_TYPES = {
     range: 120,
     damage: 10,
     cooldown: 400, // ms
-    color: '#38bdf8', // cyan
+    color: '#0ea5e9', // Blue
     description: 'Fast firing basic defense.'
   },
   SNIPER: {
@@ -33,7 +34,7 @@ export const TOWER_TYPES = {
     range: 300,
     damage: 50,
     cooldown: 1500,
-    color: '#22c55e', // green
+    color: '#10b981', // Green
     description: 'Long range, high damage.'
   },
   BLASTER: {
@@ -42,7 +43,7 @@ export const TOWER_TYPES = {
     range: 80,
     damage: 30,
     cooldown: 800,
-    color: '#ef4444', // red
+    color: '#ef4444', // Red
     description: 'Splash damage area attack.',
     splashRadius: 60
   },
@@ -52,7 +53,7 @@ export const TOWER_TYPES = {
     range: 100,
     damage: 4,
     cooldown: 50,
-    color: '#f59e0b', // orange
+    color: '#f59e0b', // Amber
     description: 'Extremely fast fire rate.'
   }
 };

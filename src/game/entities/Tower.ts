@@ -9,6 +9,7 @@ interface TowerType {
     damage: number;
     cooldown: number;
     color: string;
+    cost: number;
     splashRadius?: number;
 }
 

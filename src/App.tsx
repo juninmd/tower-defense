@@ -111,12 +111,16 @@ function App() {
   };
 
   return (
-    <div className="w-full h-screen bg-slate-900 flex items-center justify-center overflow-hidden relative">
-      <div className="relative shadow-2xl rounded-xl overflow-hidden border border-slate-700 bg-slate-800">
+    <div className="w-full h-screen bg-slate-900 flex items-center justify-center overflow-hidden relative p-4">
+      <div
+        className="relative shadow-2xl rounded-xl overflow-hidden border border-slate-700 bg-slate-800"
+        style={{ width: '100%', maxWidth: CANVAS_WIDTH, aspectRatio: `${CANVAS_WIDTH}/${CANVAS_HEIGHT}` }}
+      >
         <canvas
           ref={canvasRef}
-          className="cursor-crosshair block"
-          style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
+          className="cursor-crosshair block w-full h-full"
+          width={CANVAS_WIDTH}
+          height={CANVAS_HEIGHT}
           onClick={handleCanvasClick}
         />
 

@@ -27,28 +27,28 @@ export const GameHUD: React.FC<GameHUDProps> = ({
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4">
 
       {/* Top Bar: Stats & Controls */}
-      <div className="flex justify-between items-center bg-slate-800/90 backdrop-blur-md p-4 rounded-xl border border-slate-600 shadow-xl pointer-events-auto">
-        <div className="flex gap-8">
-            <div className="flex items-center gap-2 text-rose-500">
-                <Shield size={24} />
-                <span className="text-2xl font-bold font-mono">{lives}</span>
+      <div className="flex justify-between items-center bg-slate-800/90 backdrop-blur-md p-2 rounded-xl border border-slate-600 shadow-xl pointer-events-auto w-full">
+        <div className="flex gap-4">
+            <div className="flex items-center gap-1 text-rose-500">
+                <Shield size={18} />
+                <span className="text-lg font-bold font-mono">{lives}</span>
             </div>
-            <div className="flex items-center gap-2 text-emerald-400">
-                <span className="text-xl">$</span>
-                <span className="text-2xl font-bold font-mono">{money}</span>
+            <div className="flex items-center gap-1 text-emerald-400">
+                <span className="text-lg">$</span>
+                <span className="text-lg font-bold font-mono">{money}</span>
             </div>
         </div>
 
-        <div className="text-slate-200 font-bold text-xl tracking-widest">
-            WAVE <span className="text-sky-400 text-2xl">{wave}</span>
+        <div className="text-slate-200 font-bold text-sm tracking-widest">
+            WAVE <span className="text-sky-400 text-lg">{wave}</span>
         </div>
 
-        <div className="flex gap-2">
-            <button onClick={onTogglePause} className="p-2 rounded bg-slate-700 hover:bg-slate-600 text-white transition">
-                {isPaused ? <Play size={20} /> : <Pause size={20} />}
+        <div className="flex gap-1">
+            <button onClick={onTogglePause} className="p-1.5 rounded bg-slate-700 hover:bg-slate-600 text-white transition">
+                {isPaused ? <Play size={16} /> : <Pause size={16} />}
             </button>
-            <button onClick={onToggleSpeed} className={`p-2 rounded bg-slate-700 hover:bg-slate-600 text-white transition ${timeScale > 1 ? 'text-sky-400' : ''}`}>
-                <FastForward size={20} />
+            <button onClick={onToggleSpeed} className={`p-1.5 rounded bg-slate-700 hover:bg-slate-600 text-white transition ${timeScale > 1 ? 'text-sky-400' : ''}`}>
+                <FastForward size={16} />
             </button>
         </div>
       </div>
@@ -68,16 +68,18 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       )}
 
       {/* Bottom Bar: Tower Selection */}
-      <div className="flex justify-center items-end gap-4 pointer-events-auto pb-4">
+      <div className="relative flex justify-center items-end gap-2 pointer-events-auto pb-2 w-full">
 
         {hasSelectedTowerOnMap && (
-            <button
-                onClick={onSellTower}
-                className="mb-4 bg-rose-600 hover:bg-rose-500 text-white p-4 rounded-xl font-bold shadow-lg flex flex-col items-center gap-2 border-2 border-rose-400 transition transform hover:scale-105"
-            >
-                <Trash2 size={24} />
-                <span>SELL (70%)</span>
-            </button>
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30">
+                <button
+                    onClick={onSellTower}
+                    className="bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-full font-bold shadow-lg flex items-center gap-2 border-2 border-rose-400 transition transform hover:scale-105"
+                >
+                    <Trash2 size={20} />
+                    <span>SELL (70%)</span>
+                </button>
+            </div>
         )}
 
         {Object.entries(TOWER_TYPES).map(([key, tower]) => {
@@ -90,17 +92,17 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                     onClick={() => onSelectTower(key === selectedTower ? null : key)}
                     disabled={!canAfford && !isSelected}
                     className={`
-                        relative group flex flex-col items-center p-3 rounded-xl border-2 transition-all w-24
-                        ${isSelected ? 'bg-slate-700 border-sky-400 shadow-lg scale-110 -translate-y-2' : 'bg-slate-800/90 border-slate-600 hover:border-slate-400'}
+                        relative group flex flex-col items-center p-2 rounded-xl border-2 transition-all flex-1 max-w-[80px]
+                        ${isSelected ? 'bg-slate-700 border-sky-400 shadow-lg -translate-y-2' : 'bg-slate-800/90 border-slate-600 hover:border-slate-400'}
                         ${!canAfford && !isSelected ? 'opacity-50 grayscale' : ''}
                     `}
                 >
-                    <div className="w-8 h-8 rounded-full mb-2 shadow-lg" style={{ backgroundColor: tower.color }}></div>
-                    <span className="text-xs font-bold text-slate-200">{tower.name}</span>
-                    <span className="text-xs font-mono text-emerald-400">${tower.cost}</span>
+                    <div className="w-6 h-6 rounded-full mb-1 shadow-lg" style={{ backgroundColor: tower.color }}></div>
+                    <span className="text-[10px] font-bold text-slate-200 truncate w-full text-center">{tower.name}</span>
+                    <span className="text-[10px] font-mono text-emerald-400">${tower.cost}</span>
 
                     {/* Tooltip */}
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 bg-slate-900 p-3 rounded-lg border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 bg-slate-900 p-3 rounded-lg border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl hidden sm:block">
                         <h4 className="font-bold text-slate-200 mb-1">{tower.name}</h4>
                         <p className="text-xs text-slate-400">{tower.description}</p>
                         <div className="mt-2 text-xs flex justify-between text-slate-500">

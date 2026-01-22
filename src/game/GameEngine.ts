@@ -49,9 +49,9 @@ export class GameEngine {
   }
 
   generatePath(): Vector2[] {
-    // Grid coordinates
+    // Vertical Winding Path (Grid coordinates for 11x20)
     const points = [
-        [0, 2], [5, 2], [5, 8], [12, 8], [12, 4], [18, 4], [18, 12], [8, 12], [8, 14], [22, 14], [22, 8], [24, 8]
+        [1, 0], [1, 3], [9, 3], [9, 6], [2, 6], [2, 9], [9, 9], [9, 13], [1, 13], [1, 16], [5, 16], [5, 20]
     ];
     return points.map(p => new Vector2(p[0] * TILE_SIZE + TILE_SIZE/2, p[1] * TILE_SIZE + TILE_SIZE/2));
   }

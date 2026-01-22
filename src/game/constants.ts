@@ -1,7 +1,7 @@
 
-export const TILE_SIZE = 40;
-export const MAP_WIDTH = 24; // in tiles
-export const MAP_HEIGHT = 16; // in tiles
+export const TILE_SIZE = 32;
+export const MAP_WIDTH = 11; // 352px width (Mobile friendly)
+export const MAP_HEIGHT = 20; // 640px height
 export const CANVAS_WIDTH = MAP_WIDTH * TILE_SIZE;
 export const CANVAS_HEIGHT = MAP_HEIGHT * TILE_SIZE;
 

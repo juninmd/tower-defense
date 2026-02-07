@@ -23,12 +23,8 @@ export class InputManager {
         if (this.placementMode) {
             const cost = TOWERS[this.placementMode].cost;
             if (money >= cost) {
-                // Check collision with existing towers
-                const isValid = !towers.some(t => t.position.distanceTo(this.mousePosition) < 20);
-
-                if (isValid) {
-                     return { action: 'PLACE', type: this.placementMode, pos: this.mousePosition };
-                }
+                // The GameEngine handles placement validation, so we just return the action.
+                return { action: 'PLACE', type: this.placementMode, pos: this.mousePosition };
             }
             return null;
         } else {

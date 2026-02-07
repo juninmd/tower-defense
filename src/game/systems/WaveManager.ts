@@ -1,7 +1,7 @@
 import { type EnemyType } from '../../types';
 
 export class WaveManager {
-    public wave: number = 1;
+    public wave: number = 0;
     public waveActive: boolean = false;
     public enemiesToSpawn: EnemyType[] = [];
     public spawnTimer: number = 0;

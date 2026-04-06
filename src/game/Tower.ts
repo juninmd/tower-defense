@@ -186,7 +186,7 @@ export class Tower implements ITower {
 
       // Intercept targeting logic
       // Estimate travel time of projectile. Base speed is around 8.
-      const projSpeed = 8;
+      const projSpeed = 8; // TODO: Pull from tower/projectile config
       const distToTarget = this.position.distanceTo(target.position);
       const travelTimeFrames = distToTarget / projSpeed;
 

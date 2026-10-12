@@ -11,4 +11,5 @@ concurrency:
 
 jobs:
   check:
+    runs-on: ubuntu-22.04
     uses: juninmd/base-actions/.github/workflows/reusable-validate.yml@main

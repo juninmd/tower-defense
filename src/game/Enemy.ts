@@ -23,6 +23,7 @@ export class Enemy implements IEnemy, QuadTreeItem {
   isRegen: boolean;
   lastDamageTime: number = 0; // For regen delay
   anticipatedPosition?: Vector2;
+  distanceTraveled: number = 0; // Better targeting logic
 
   // Visuals
   scale: number = 0;
@@ -174,8 +175,10 @@ export class Enemy implements IEnemy, QuadTreeItem {
     if (dist < currentSpeed) {
       this.position = target.clone();
       this.waypointIndex++;
+      this.distanceTraveled += dist;
     } else {
       this.position = this.position.add(direction.normalize().scale(currentSpeed));
+      this.distanceTraveled += currentSpeed;
     }
   }
 

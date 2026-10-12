@@ -139,37 +139,14 @@ function App() {
     engineRef.current?.updateMouse(new Vector2(x, y));
   };
 
-  const handlePointerUp = () => {
-    if (!engineRef.current) return;
-
-    // Only attempt placement on pointer up if we are dragging a tower
-    if (selectedTowerType) {
-      const success = engineRef.current.confirmPlacement();
-      if (success) {
-        setSelectedTowerType(null);
-      }
-    }
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!engineRef.current) return;
-    e.preventDefault();
-    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
-    engineRef.current.updateMouse(new Vector2(x, y));
-  };
-
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!engineRef.current || !canvasRef.current) return;
 
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
-
-    // Update mouse pos just in case
     engineRef.current.updateMouse(new Vector2(x, y));
 
     if (selectedTowerType) {
-      // Attempt placement logic is now handled via explicit buttons on mobile,
-      // or click on desktop.
-      // For unified approach: Click confirms placement.
+      // Attempt placement logic is now handled via pointer up on mobile and desktop
       const success = engineRef.current.confirmPlacement();
       if (success) {
         setSelectedTowerType(null);
@@ -182,6 +159,13 @@ function App() {
         setSelectedTower(null);
       }
     }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!engineRef.current) return;
+    e.preventDefault();
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    engineRef.current.updateMouse(new Vector2(x, y));
   };
 
   const handleSell = () => {
@@ -220,7 +204,6 @@ function App() {
           style={{ width: dimensions.width, height: dimensions.height }}
           ref={canvasRef}
           className="cursor-crosshair block touch-none"
-          onClick={handleCanvasClick}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
           onPointerMove={handlePointerMove}

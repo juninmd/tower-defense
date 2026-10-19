@@ -31,6 +31,7 @@ export class Enemy implements IEnemy, QuadTreeItem {
   rotation: number = 0;
 
   waypointIndex: number = 0;
+  distanceTraveled: number = 0;
   public path: Vector2[] = [];
   private wobbleOffset: number = Math.random() * 100;
   private hasStartPosition: boolean = false;
@@ -174,8 +175,10 @@ export class Enemy implements IEnemy, QuadTreeItem {
     if (dist < currentSpeed) {
       this.position = target.clone();
       this.waypointIndex++;
+      this.distanceTraveled += dist;
     } else {
       this.position = this.position.add(direction.normalize().scale(currentSpeed));
+      this.distanceTraveled += currentSpeed;
     }
   }
 

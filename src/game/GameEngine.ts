@@ -1,3 +1,4 @@
+import { renderMapBackground } from './MapRenderer';
 import { Enemy } from './Enemy';
 import { Tower } from './Tower';
 import { Projectile } from './Projectile';
@@ -99,7 +100,10 @@ export class GameEngine {
     public shakeX: number = 0;
     public shakeY: number = 0;
 
-    constructor(canvas: HTMLCanvasElement, mapPath: Vector2[], width: number, height: number, onStateChange: (state: GameState) => void) {
+    themeKey: string = 'GRID';
+
+    constructor(canvas: HTMLCanvasElement, mapPath: Vector2[], width: number, height: number, onStateChange: (state: GameState) => void, themeKey: string = 'GRID') {
+        this.themeKey = themeKey;
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.width = width;
@@ -175,42 +179,9 @@ export class GameEngine {
 
         ctx.clearRect(0, 0, this.width, this.height);
 
-        // Grid
-        ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
-        ctx.lineWidth = 1;
-
-        const cellSize = 40;
-        for (let x = 0; x <= this.width; x += cellSize) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, this.height);
-            ctx.stroke();
-        }
-
-        for (let y = 0; y <= this.height; y += cellSize) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(this.width, y);
-            ctx.stroke();
-        }
-
-        // Path
-        ctx.beginPath();
-        if (this.path.length > 0) {
-            ctx.moveTo(this.path[0].x, this.path[0].y);
-            for (let i = 1; i < this.path.length; i++) {
-                ctx.lineTo(this.path[i].x, this.path[i].y);
-            }
-        }
-        ctx.lineWidth = 20;
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#60a5fa';
-        ctx.stroke();
+        let seed = 7;
+        for (const c of this.themeKey) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+        renderMapBackground(ctx, this.width, this.height, this.path, this.themeKey, seed + this.path.length);
     }
 
     startGame() {

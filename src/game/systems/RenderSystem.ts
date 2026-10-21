@@ -1,4 +1,5 @@
 import { type GameEngine } from '../GameEngine';
+import { drawEndpoints } from '../MapRenderer';
 
 export class RenderSystem {
     private engine: GameEngine;
@@ -44,6 +45,8 @@ export class RenderSystem {
             ctx.strokeStyle = '#60a5fa';
             ctx.stroke();
         }
+
+        drawEndpoints(ctx, path, this.engine.themeKey, this.engine.state.lives);
 
         towers.forEach(t => {
             t.draw(ctx);

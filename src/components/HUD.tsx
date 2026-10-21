@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair, Map as MapIcon, Cpu, ChevronLeft, ChevronRight, Check, X, FastForward } from 'lucide-react';
+import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair, Cpu, Check, X, FastForward } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
 import { TOWERS, type TowerType, TowerTargetingMode } from '../game/Constants';
 import { Tower } from '../game/Tower';
 import { soundManager } from '../game/SoundManager';
-import { MAPS, type MapConfig } from '../game/Maps';
+import { type MapConfig } from '../game/Maps';
+import { StartMenu } from './StartMenu';
+import { skinTowerColor } from '../game/Skins';
 
 interface HUDProps {
   gameState: GameState;
@@ -100,18 +102,6 @@ export const HUD: React.FC<HUDProps> = ({
     const nextIndex = (currentIndex + 1) % modes.length;
     selectedTower.setTargetingMode(modes[nextIndex]);
     forceUpdate(n => n + 1);
-  };
-
-  const nextMap = () => {
-    const idx = MAPS.findIndex(m => m.id === selectedMap.id);
-    const next = MAPS[(idx + 1) % MAPS.length];
-    onSelectMap(next);
-  };
-
-  const prevMap = () => {
-    const idx = MAPS.findIndex(m => m.id === selectedMap.id);
-    const prev = MAPS[(idx - 1 + MAPS.length) % MAPS.length];
-    onSelectMap(prev);
   };
 
   return (
@@ -374,7 +364,7 @@ export const HUD: React.FC<HUDProps> = ({
             >
               <div
                 className={`${isPortrait ? 'w-8 h-8 mb-1' : 'w-10 h-10 sm:w-12 sm:h-12 mb-1 sm:mb-3'} rounded-lg shadow-lg flex items-center justify-center transition-transform group-active:scale-95 lg:group-hover:scale-110`}
-                style={{ backgroundColor: tower.color, boxShadow: isSelected ? `0 0 15px ${tower.color}` : 'none' }}
+                style={{ backgroundColor: skinTowerColor(key as TowerType, tower.color), boxShadow: isSelected ? `0 0 15px ${skinTowerColor(key as TowerType, tower.color)}` : 'none' }}
               >
                 {/* Simple Icon Representation */}
                 {key === 'BASIC' && <div className="w-4 h-4 bg-white rounded-full" />}
@@ -421,56 +411,16 @@ export const HUD: React.FC<HUDProps> = ({
       </div >
 
       {/* Start Game Overlay */}
-      {
-        !gameState.gameStarted && !gameState.isGameOver && (
-          <div className="absolute inset-0 bg-slate-950/90 flex items-center justify-center z-50 pointer-events-auto backdrop-blur-sm">
-            <div className="bg-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-700/50 text-center max-w-lg shadow-[0_0_50px_rgba(59,130,246,0.15)] relative overflow-hidden w-full mx-4">
-              {/* Background decoration */}
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-
-              <h1 className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400 mb-4 tracking-tight filter drop-shadow-lg">
-                NEON DEFENSE
-              </h1>
-              <p className="text-slate-400 mb-8 text-lg leading-relaxed">
-                Strategic tower defense in a cyberpunk grid.
-                <br />Protect the core at all costs.
-              </p>
-
-              {/* Map Selection */}
-              <div className="mb-10 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
-                <div className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Target Sector</div>
-                <div className="flex items-center justify-between gap-4">
-                  <button onClick={prevMap} className="p-2 lg:hover:bg-slate-700 rounded-full transition-colors text-slate-400 lg:hover:text-white">
-                    <ChevronLeft size={24} />
-                  </button>
-                  <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-2 text-xl font-bold text-white">
-                      <MapIcon size={20} className="text-blue-400" />
-                      {selectedMap.name}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">{selectedMap.description}</div>
-                  </div>
-                  <button onClick={nextMap} className="p-2 lg:hover:bg-slate-700 rounded-full transition-colors text-slate-400 lg:hover:text-white">
-                    <ChevronRight size={24} />
-                  </button>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  engine?.current?.startGame();
-                  soundManager.playShoot('BASIC');
-                }}
-                className="group relative w-full bg-blue-600 lg:hover:bg-blue-500 text-white text-xl font-bold py-5 rounded-2xl flex items-center justify-center gap-4 transition-all lg:hover:scale-[1.02] shadow-[0_0_20px_rgba(37,99,235,0.4)] overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] lg:group-hover:animate-[shimmer_1.5s_infinite]" />
-                <Play fill="currentColor" size={24} />
-                <span>INITIALIZE SYSTEM</span>
-              </button>
-            </div>
-          </div>
-        )
-      }
+      {!gameState.gameStarted && !gameState.isGameOver && (
+        <StartMenu
+          selectedMap={selectedMap}
+          onSelectMap={onSelectMap}
+          onStart={() => {
+            engine?.current?.startGame();
+            soundManager.playShoot('BASIC');
+          }}
+        />
+      )}
 
       {/* Mod Selection Overlay */}
       {

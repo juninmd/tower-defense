@@ -98,7 +98,7 @@ function App() {
     // Initialize Engine with selected map and dynamic dimensions
     const engine = new GameEngine(canvasRef.current, selectedMap.waypoints, dimensions.width, dimensions.height, (newState) => {
       setGameState(newState);
-    });
+    }, selectedMap.theme);
     engineRef.current = engine;
 
     return () => {

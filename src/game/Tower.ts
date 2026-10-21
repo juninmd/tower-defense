@@ -1,3 +1,4 @@
+import { skinTowerColor, drawTowerBase, getSkin } from './Skins';
 import { Vector2 } from './Vector';
 import { type ITower } from '../types';
 import { TOWERS, type TowerType, DamageType, TowerTargetingMode } from './Constants';
@@ -320,6 +321,7 @@ export class Tower implements ITower {
   }
 
   draw(ctx: CanvasRenderingContext2D, isSelected: boolean = false) {
+    const color = skinTowerColor(this.type, this.color);
     ctx.save();
     ctx.translate(this.position.x, this.position.y);
 
@@ -348,16 +350,12 @@ export class Tower implements ITower {
 
     // Glow effect removed for performance
 
-    // Draw Base
-    ctx.fillStyle = '#1e293b'; // Slate 800
-    ctx.fillRect(-14, -14, 28, 28);
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-14, -14, 28, 28);
+    // Draw Base (skin-dependent pedestal)
+    drawTowerBase(ctx, color);
 
     // Level Indicators
     if (this.level >= 2) {
-         ctx.strokeStyle = '#FCD34D'; // Amber 300
+         ctx.strokeStyle = getSkin().accent;
          ctx.lineWidth = 2;
          ctx.strokeRect(-17, -17, 34, 34); // Gold ring
     }
@@ -368,7 +366,7 @@ export class Tower implements ITower {
     }
 
     // Draw Turret
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = color;
 
     // Different shapes for different towers
     if (this.type === 'SNIPER') {
@@ -425,7 +423,7 @@ export class Tower implements ITower {
         ctx.fill();
 
         // Coil Turns
-        ctx.strokeStyle = this.color;
+        ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         for(let i=0; i<3; i++) {
              ctx.beginPath();
@@ -434,7 +432,7 @@ export class Tower implements ITower {
         }
 
         // Top Sphere
-        ctx.fillStyle = this.color;
+        ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(0, 0, 4, 0, Math.PI * 2);
         ctx.fill();
@@ -457,13 +455,13 @@ export class Tower implements ITower {
             ctx.fill();
             ctx.restore();
         }
-        ctx.fillStyle = this.color; // Reset for center
+        ctx.fillStyle = color; // Reset for center
         ctx.beginPath();
         ctx.arc(0, 0, 8, 0, Math.PI * 2);
         ctx.fill();
     } else if (this.type === 'BEACON') {
         // Beacon
-        ctx.fillStyle = this.color;
+        ctx.fillStyle = color;
         ctx.beginPath();
         ctx.moveTo(0, -18);
         ctx.lineTo(15, 12);

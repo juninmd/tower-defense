@@ -1,3 +1,4 @@
+import { skinEnemyColor, getSkin } from './Skins';
 import { Vector2 } from './Vector';
 import { type IEnemy, type EnemyType } from '../types';
 import { ENEMIES, DefenseType } from './Constants';
@@ -192,8 +193,8 @@ export class Enemy implements IEnemy, QuadTreeItem {
 
     // Neon Glow removed for performance
     // Draw body based on type
-    ctx.fillStyle = this.hitFlashTimer > 0 ? '#ffffff' : this.color;
-    ctx.strokeStyle = '#fff';
+    ctx.fillStyle = this.hitFlashTimer > 0 ? '#ffffff' : skinEnemyColor(this.type, this.color);
+    ctx.strokeStyle = getSkin().outline;
     ctx.lineWidth = 2;
 
     if (this.isCamo) {
@@ -248,6 +249,12 @@ export class Enemy implements IEnemy, QuadTreeItem {
 
     ctx.fill();
     ctx.stroke();
+
+    // Inner core highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius * 0.35, 0, Math.PI * 2);
+    ctx.fill();
 
     // Cracks for damaged heavy units
     if ((this.defenseType === DefenseType.HEAVY || this.defenseType === DefenseType.SHIELDED) && this.hp < this.maxHp * 0.5) {

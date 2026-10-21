@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShieldAlert, Skull } from 'lucide-react';
-import { ENEMIES } from '../../game/Constants';
-import { skinEnemyColor } from '../../game/Skins';
+import { SpriteCanvas } from './SpriteCanvas';
+import { ENEMY_LORE } from '../../game/Lore';
 import { type GameEngine } from '../../game/GameEngine';
 import { type EnemyType } from '../../types';
 
@@ -18,11 +18,10 @@ export const WavePanel: React.FC<Props> = ({ nextWave, engine }) => {
 
   return (
     <div className="pointer-events-auto self-center flex flex-col items-center gap-1.5">
-      <div className="flex items-center gap-1.5 bg-slate-900/85 backdrop-blur-md border border-slate-700/50 rounded-full px-3 py-1">
+      <div className="flex items-center gap-2 bg-slate-900/85 backdrop-blur-md border border-slate-700/50 rounded-full px-3 py-0.5">
         {ORDER.filter(t => preview[t]).map(t => (
-          <span key={t} className="flex items-center gap-1 text-[11px] font-mono text-slate-300" title={t}>
-            <span className="w-2.5 h-2.5 rounded-full border border-white/50" style={{ background: skinEnemyColor(t, ENEMIES[t].color) }} />
-            ×{preview[t]}{ENEMIES[t].isCamo && <span className="text-slate-500" title="camo">◌</span>}
+          <span key={t} className="flex items-center gap-0.5 text-[11px] font-mono text-slate-300" title={ENEMY_LORE[t].callsign}>
+            <SpriteCanvas kind="enemy" type={t} size={24} />×{preview[t]}
           </span>
         ))}
         {hasBoss && <Skull size={13} className="text-rose-400" />}

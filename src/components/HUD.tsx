@@ -11,6 +11,8 @@ import { TowerBar } from './hud/TowerBar';
 import { TowerPanel } from './hud/TowerPanel';
 import { WavePanel } from './hud/WavePanel';
 import { GameOver } from './hud/GameOver';
+import { WaveBanner } from './hud/WaveBanner';
+import { THEMES } from '../game/MapThemes';
 
 interface HUDProps {
   gameState: GameState;
@@ -92,7 +94,10 @@ export const HUD: React.FC<HUDProps> = ({
   }, [gameState, selectedTower, selectedTowerType, engine, onCancelPlacement, onDeselect, onSellTower, onSelectTower]);
 
   return (
-    <div className={`absolute inset-0 pointer-events-none flex flex-col justify-between font-sans selection:bg-blue-500/30 ${isPortrait ? '' : 'p-4'}`}>
+    <div style={{ '--accent': THEMES[selectedMap.theme]?.edge } as React.CSSProperties} className={`absolute inset-0 pointer-events-none flex flex-col justify-between font-sans selection:bg-blue-500/30 ${isPortrait ? '' : 'p-4'}`}>
+      {gameState.gameStarted && !gameState.isGameOver && gameState.lives <= 5 && <div className="absolute inset-0 danger-vignette pointer-events-none" />}
+      <WaveBanner wave={gameState.wave} active={gameState.waveActive} engine={engine} />
+
       <TopBar gameState={gameState} engine={engine} isPortrait={isPortrait} />
 
       {selectedTower && !gameState.isGameOver && !gameState.choosingMod && (

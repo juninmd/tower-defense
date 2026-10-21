@@ -13,6 +13,7 @@
 - [x] **Audio Overhaul**: Complete the procedural sound generation system.
 
 ## 🚀 Phase 3: Polish & Platform (Future)
+- [x] **Resonance, Characters & Cinematic HUD**: tower synergy links, animated sprites, wave banners, low-lives vignette.
 - [ ] **Local Storage**: Save game progress, unlocked maps, and best waves. (skin choice already persisted)
 - [x] **Sectors & Skins**: 7 themed maps (`MapThemes.ts`/`MapRenderer.ts`), 4 unit skins (`Skins.ts`), new start menu with map previews.
 - [x] **VFX Overhaul**: Advanced particle effects for explosions and energy beams, plus pulsating neon range rings.

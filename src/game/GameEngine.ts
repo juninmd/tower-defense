@@ -1,3 +1,4 @@
+import { recalcResonance } from './Resonance';
 import { renderMapBackground } from './MapRenderer';
 import { Enemy } from './Enemy';
 import { Tower } from './Tower';
@@ -297,6 +298,8 @@ export class GameEngine {
             }
 
             this.towers.push(newTower);
+
+            this.needsBuffRecalculation = true;
             this.towerMap.set(newTower.id, newTower);
 
             // Visual feedback
@@ -331,6 +334,7 @@ export class GameEngine {
             this.state.money -= cost;
             tower.upgrade(upgradePath);
             tower.totalSpent += cost;
+            this.needsBuffRecalculation = true;
 
             // Apply mods again?
             // upgrade() sets stats based on base. We need to re-apply multipliers.
@@ -450,6 +454,7 @@ export class GameEngine {
                     }
                 });
             });
+            recalcResonance(this.towers);
             this.needsBuffRecalculation = false;
         }
         // --- END BUFF SYSTEM ---

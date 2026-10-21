@@ -3,6 +3,10 @@ import { Play, Star } from 'lucide-react';
 import { MAPS, type MapConfig } from '../game/Maps';
 import { THEMES } from '../game/MapThemes';
 import { SKINS, getSkin, setSkin } from '../game/Skins';
+import { TOWERS, type TowerType } from '../game/Constants';
+import { TOWER_LORE, ENEMY_LORE } from '../game/Lore';
+import { SpriteCanvas } from './hud/SpriteCanvas';
+import { type EnemyType } from '../types';
 
 interface Props {
   selectedMap: MapConfig;
@@ -76,6 +80,32 @@ export const StartMenu: React.FC<Props> = ({ selectedMap, onSelectMap, onStart }
           ))}
         </div>
         <div className="text-xs text-slate-500 mb-5">{skin.description}</div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-left">
+          <div className="bg-slate-800/40 rounded-xl p-2.5 border border-slate-700/40">
+            <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Arsenal</div>
+            <div className="flex flex-wrap gap-0.5">
+              {(Object.keys(TOWERS) as TowerType[]).map(t => (
+                <span key={`${t}-${skinId}`} title={`${TOWER_LORE[t].callsign} — ${TOWER_LORE[t].role}`}>
+                  <SpriteCanvas kind="tower" type={t} size={40} animated />
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="bg-slate-800/40 rounded-xl p-2.5 border border-slate-700/40">
+            <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Ameaças</div>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(ENEMY_LORE) as EnemyType[]).map(e => (
+                <span key={`${e}-${skinId}`} title={`${ENEMY_LORE[e].callsign} — ${ENEMY_LORE[e].blurb}`}>
+                  <SpriteCanvas kind="enemy" type={e} size={40} animated />
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="text-[11px] text-fuchsia-300/90 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-lg px-3 py-1.5 mb-5">
+          ✦ <b>Ressonância:</b> torres de tipos diferentes próximas se conectam e ganham +8% de velocidade por elo (até 3).
+        </div>
 
         <button
           onClick={onStart}

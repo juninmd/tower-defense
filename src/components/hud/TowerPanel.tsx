@@ -4,6 +4,8 @@ import { TOWERS, TowerTargetingMode } from '../../game/Constants';
 import { type GameState, type GameEngine } from '../../game/GameEngine';
 import { type Tower } from '../../game/Tower';
 import { TowerIcon } from './TowerIcon';
+import { TOWER_LORE } from '../../game/Lore';
+import { resonanceBonus, MAX_LINKS } from '../../game/Resonance';
 
 interface Props {
   tower: Tower;
@@ -34,13 +36,13 @@ export const TowerPanel: React.FC<Props> = ({ tower, gameState, engine, isPortra
   const upBtn = 'flex-1 py-2 rounded-lg font-bold text-xs border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (
-    <div className={`pointer-events-auto absolute z-30 bg-slate-900/95 backdrop-blur-xl border border-slate-600/50 text-white shadow-2xl p-3 animate-in fade-in
+    <div className={`pointer-events-auto absolute z-30 bg-slate-900/95 backdrop-blur-xl border border-(--accent)/50 text-white shadow-[0_0_30px_-8px_var(--accent)] p-3 animate-in fade-in
       ${isPortrait ? 'left-0 right-[60px] bottom-0 rounded-t-2xl' : 'right-4 top-24 w-64 rounded-2xl'}`}>
       <div className="flex items-center gap-2 mb-2">
         <TowerIcon type={tower.type} size={30} glow />
         <div className="flex-1 min-w-0">
-          <div className="font-bold tracking-wide leading-none">{TOWERS[tower.type].name.toUpperCase()}</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">LVL {tower.level}{tower.camoDetection ? ' · camo detect' : ''}</div>
+          <div className="font-bold tracking-wide leading-none">{TOWER_LORE[tower.type].callsign.toUpperCase()} <span className="text-[10px] font-normal text-slate-500">{TOWERS[tower.type].name}</span></div>
+          <div className="text-[10px] text-slate-400 mt-0.5">{TOWER_LORE[tower.type].role} · LVL {tower.level}{tower.camoDetection ? ' · camo' : ''}</div>
         </div>
         <button onClick={onClose} aria-label="Close" className="p-1 text-slate-500 lg:hover:text-white"><X size={18} /></button>
       </div>
@@ -53,6 +55,15 @@ export const TowerPanel: React.FC<Props> = ({ tower, gameState, engine, isPortra
         <Stat label="Type" value={<span className="text-[10px]">{tower.damageType}</span>} />
         <Stat label="Pops" value={<span className="text-emerald-400">{pops}</span>} />
       </div>
+
+      {tower.type !== 'FARM' && (
+        <div className="mb-2 px-3 py-1.5 rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/10 flex items-center justify-between text-[11px]">
+          <span className="font-bold uppercase tracking-wider text-fuchsia-300">Ressonância</span>
+          <span className="font-mono text-fuchsia-200">
+            {tower.links.length}/{MAX_LINKS} · +{Math.round(resonanceBonus(tower) * 100)}% vel.
+          </span>
+        </div>
+      )}
 
       <button onClick={cycleTarget} className="w-full mb-2 bg-slate-800 lg:hover:bg-slate-700 border border-slate-600 px-3 py-2 rounded-lg flex items-center justify-between transition-colors">
         <span className="flex items-center gap-2 text-slate-300 text-[10px] font-bold uppercase"><Crosshair size={14} /> Target</span>

@@ -1,4 +1,5 @@
 import { skinEnemyColor, getSkin } from './Skins';
+import { drawEnemySprite } from './EnemySprites';
 import { Vector2 } from './Vector';
 import { type IEnemy, type EnemyType } from '../types';
 import { ENEMIES, DefenseType } from './Constants';
@@ -205,56 +206,14 @@ export class Enemy implements IEnemy, QuadTreeItem {
     ctx.save();
     ctx.rotate(this.rotation);
 
-    ctx.beginPath();
-    if (this.type === 'TANK' || this.type === 'ARMORED') {
-        // Square for Tank/Armored
-        ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
-    } else if (this.type === 'FAST' || this.type === 'SWARM') {
-        // Triangle for Fast/Swarm pointing right (which aligns with rotation 0)
-        ctx.moveTo(this.radius, 0);
-        ctx.lineTo(-this.radius, -this.radius);
-        ctx.lineTo(-this.radius, this.radius);
-        ctx.closePath();
-    } else if (this.type === 'BOSS') {
-        // Octagon/Star for Boss
-        const spikes = 8;
-        const outerRadius = this.radius;
-        const innerRadius = this.radius / 1.5;
-        for (let i = 0; i < spikes * 2; i++) {
-            const r = i % 2 === 0 ? outerRadius : innerRadius;
-            const angle = (Math.PI * i) / spikes;
-            const x = Math.cos(angle) * r;
-            const y = Math.sin(angle) * r;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-    } else {
-        // Circle for Normal
-        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-    }
-
-    // Draw Status Effect Visuals
+    // Status tints
+    let fill = this.hitFlashTimer > 0 ? '#ffffff' : skinEnemyColor(this.type, this.color);
     if (this.hitFlashTimer <= 0) {
-        if (this.effects.has(StatusEffectType.SLOW)) {
-            ctx.fillStyle = '#67e8f9'; // Cyan tint
-        }
-        if (this.effects.has(StatusEffectType.BURN)) {
-            ctx.fillStyle = '#f97316'; // Orange tint
-        }
-        if (this.effects.has(StatusEffectType.STUN)) {
-            ctx.fillStyle = '#facc15'; // Yellow tint
-        }
+        if (this.effects.has(StatusEffectType.SLOW)) fill = '#67e8f9';
+        if (this.effects.has(StatusEffectType.BURN)) fill = '#f97316';
+        if (this.effects.has(StatusEffectType.STUN)) fill = '#facc15';
     }
-
-    ctx.fill();
-    ctx.stroke();
-
-    // Inner core highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.beginPath();
-    ctx.arc(0, 0, this.radius * 0.35, 0, Math.PI * 2);
-    ctx.fill();
+    drawEnemySprite(ctx, this.type, this.radius, fill, getSkin().outline, performance.now() / 1000, this.wobbleOffset);
 
     // Cracks for damaged heavy units
     if ((this.defenseType === DefenseType.HEAVY || this.defenseType === DefenseType.SHIELDED) && this.hp < this.maxHp * 0.5) {

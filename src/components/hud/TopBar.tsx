@@ -62,7 +62,7 @@ export const TopBar: React.FC<Props> = ({ gameState, engine, isPortrait }) => {
   const iconSize = isPortrait ? 14 : 18;
 
   return (
-    <div className={`pointer-events-auto flex items-center justify-between gap-2 bg-slate-900/85 backdrop-blur-md border border-slate-700/50 shadow-lg
+    <div className={`pointer-events-auto flex items-center justify-between gap-2 bg-slate-900/85 backdrop-blur-md border border-(--accent)/40 shadow-[0_0_24px_-6px_var(--accent)]
       ${isPortrait ? 'fixed top-0 left-0 w-full z-50 px-2 py-2 border-x-0 border-t-0' : 'self-center w-full max-w-4xl rounded-2xl p-2 relative'}`}>
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
         <Stat title="Lives" alert={gameState.lives <= 5} tone={gameState.lives <= 5 ? 'text-rose-300' : 'text-white'}

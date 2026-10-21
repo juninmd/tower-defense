@@ -28,6 +28,8 @@ export interface GameState {
     modOptions: Mod[];
     speed: number;
     autoStart: boolean;
+    enemiesLeft: number;
+    waveTotal: number;
 }
 
 export interface LightningBolt {
@@ -69,7 +71,9 @@ export class GameEngine {
         choosingMod: false,
         modOptions: [],
         speed: 1,
-        autoStart: false
+        autoStart: false,
+        enemiesLeft: 0,
+        waveTotal: 0
     };
 
     path: Vector2[];
@@ -490,6 +494,12 @@ export class GameEngine {
 
         // Sync State
         this.state.wave = this.waveManager.wave;
+        const left = this.state.waveActive ? this.waveManager.enemiesToSpawn.length + this.enemies.length : 0;
+        if (left !== this.state.enemiesLeft) {
+            this.state.enemiesLeft = left;
+            this.state.waveTotal = left === 0 ? 0 : Math.max(this.state.waveTotal, left);
+            this.notifyState();
+        }
 
         // Auto Start Logic
         if (!this.state.waveActive && this.state.autoStart && this.state.gameStarted && !this.state.isGameOver && !this.state.choosingMod && !this.state.isPaused) {
@@ -519,7 +529,7 @@ export class GameEngine {
                 if (this.state.lives <= 0) {
                     this.state.isGameOver = true;
                     soundManager.playGameOver();
-                    this.notifyState();
+                    this.notifyState(true);
                 }
             }
         }

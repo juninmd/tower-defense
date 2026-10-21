@@ -21,7 +21,9 @@ function App() {
     choosingMod: false,
     modOptions: [],
     speed: 1,
-    autoStart: false
+    autoStart: false,
+    enemiesLeft: 0,
+    waveTotal: 0
   });
   const [selectedTowerType, setSelectedTowerType] = useState<TowerType | null>(null);
   const [selectedTower, setSelectedTower] = useState<Tower | null>(null);

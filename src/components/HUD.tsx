@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Play, RotateCw, Zap, Cpu, Check, X } from 'lucide-react';
+import { Play, Zap, Cpu, Check, X } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
 import { TOWERS, type TowerType } from '../game/Constants';
 import { Tower } from '../game/Tower';
@@ -9,6 +9,8 @@ import { StartMenu } from './StartMenu';
 import { TopBar } from './hud/TopBar';
 import { TowerBar } from './hud/TowerBar';
 import { TowerPanel } from './hud/TowerPanel';
+import { WavePanel } from './hud/WavePanel';
+import { GameOver } from './hud/GameOver';
 
 interface HUDProps {
   gameState: GameState;
@@ -93,19 +95,6 @@ export const HUD: React.FC<HUDProps> = ({
     <div className={`absolute inset-0 pointer-events-none flex flex-col justify-between font-sans selection:bg-blue-500/30 ${isPortrait ? '' : 'p-4'}`}>
       <TopBar gameState={gameState} engine={engine} isPortrait={isPortrait} />
 
-      {/* Wave Control (Floating) */}
-      {!gameState.waveActive && gameState.gameStarted && !gameState.isGameOver && !gameState.isPaused && !gameState.choosingMod && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-auto">
-          <button
-            onClick={() => engine?.current?.startWave()}
-            className="group flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 lg:hover:from-emerald-500 lg:hover:to-teal-500 text-white px-8 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all lg:hover:scale-105 active:scale-95 border border-emerald-400/30"
-          >
-            <ShieldAlert size={20} className="lg:group-hover:animate-bounce" />
-            <span>DEPLOY NEXT WAVE</span>
-          </button>
-        </div>
-      )}
-
       {selectedTower && !gameState.isGameOver && !gameState.choosingMod && (
         <TowerPanel tower={selectedTower} gameState={gameState} engine={engine} isPortrait={isPortrait} onSell={onSellTower} onClose={onDeselect} />
       )}
@@ -145,7 +134,13 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       )}
 
-      <TowerBar gameState={gameState} selectedTowerType={selectedTowerType} onSelectTower={onSelectTower} isPortrait={isPortrait} />
+      <div className={`flex flex-col gap-2 ${isPortrait ? 'absolute bottom-3 left-0 right-[60px] items-center' : 'items-center'}`}>
+        {!gameState.waveActive && !selectedTowerType && gameState.gameStarted && !gameState.isGameOver && !gameState.isPaused && !gameState.choosingMod && (
+          <WavePanel nextWave={gameState.wave + 1} engine={engine} />
+        )}
+        {!isPortrait && <TowerBar gameState={gameState} selectedTowerType={selectedTowerType} onSelectTower={onSelectTower} isPortrait={isPortrait} />}
+      </div>
+      {isPortrait && <TowerBar gameState={gameState} selectedTowerType={selectedTowerType} onSelectTower={onSelectTower} isPortrait />}
 
       {/* Start Game Overlay */}
       {!gameState.gameStarted && !gameState.isGameOver && (
@@ -230,31 +225,8 @@ export const HUD: React.FC<HUDProps> = ({
         )
       }
 
-      {/* Game Over Overlay */}
-      {
-        gameState.isGameOver && (
-          <div className="absolute inset-0 bg-red-950/90 flex items-center justify-center z-50 pointer-events-auto backdrop-blur-md p-4">
-            <div className="bg-slate-900 p-8 sm:p-10 rounded-3xl border-2 border-red-500/50 text-center max-w-md w-full shadow-[0_0_50px_rgba(239,68,68,0.2)]">
-              <h2 className="text-5xl font-black text-red-500 mb-2 tracking-tighter">CRITICAL FAILURE</h2>
-              <div className="h-1 w-20 bg-red-500 mx-auto my-6 rounded-full" />
-              <p className="text-slate-300 text-xl mb-2">Systems compromised at</p>
-              <p className="text-4xl font-bold text-white mb-8">Wave {gameState.wave - 1}</p>
+      {gameState.isGameOver && <GameOver mapId={selectedMap.id} mapName={selectedMap.name} waveReached={Math.max(1, gameState.wave - 1)} />}
 
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full bg-slate-800 lg:hover:bg-slate-700 text-white text-lg font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-colors border border-slate-600 lg:hover:border-slate-500"
-              >
-                <RotateCw size={24} /> REBOOT SYSTEM
-              </button>
-            </div>
-          </div>
-        )
-      }
-
-      {/* Shortcuts Help */}
-      <div className="absolute bottom-4 left-4 pointer-events-none text-[10px] text-slate-500 font-mono hidden sm:block">
-        [SPACE] Start/Speed &nbsp; [ESC] Cancel/Pause &nbsp; [1-0] Select Tower &nbsp; [U] Upgrade &nbsp; [BKSP] Sell
-      </div>
     </div >
   );
 };

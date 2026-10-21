@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { Heart, Coins, Activity, ShieldAlert, Play, RotateCw, Pause, Volume2, VolumeX, Zap, Crosshair, Cpu, Check, X, FastForward } from 'lucide-react';
+import React from 'react';
+import { ShieldAlert, Play, RotateCw, Zap, Cpu, Check, X } from 'lucide-react';
 import { type GameState, GameEngine } from '../game/GameEngine';
-import { TOWERS, type TowerType, TowerTargetingMode } from '../game/Constants';
+import { TOWERS, type TowerType } from '../game/Constants';
 import { Tower } from '../game/Tower';
 import { soundManager } from '../game/SoundManager';
 import { type MapConfig } from '../game/Maps';
 import { StartMenu } from './StartMenu';
-import { skinTowerColor } from '../game/Skins';
+import { TopBar } from './hud/TopBar';
+import { TowerBar } from './hud/TowerBar';
+import { TowerPanel } from './hud/TowerPanel';
 
 interface HUDProps {
   gameState: GameState;
@@ -37,14 +39,6 @@ export const HUD: React.FC<HUDProps> = ({
   onCancelPlacement,
   isPortrait = false
 }) => {
-  const [isMuted, setIsMuted] = useState(false);
-  const [, forceUpdate] = useState(0);
-
-  const toggleMute = () => {
-    soundManager.toggleMute();
-    setIsMuted(!isMuted);
-  };
-
   // Keyboard Shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -95,88 +89,9 @@ export const HUD: React.FC<HUDProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameState, selectedTower, selectedTowerType, engine, onCancelPlacement, onDeselect, onSellTower, onSelectTower]);
 
-  const cycleTargetingMode = () => {
-    if (!selectedTower) return;
-    const modes = Object.values(TowerTargetingMode);
-    const currentIndex = modes.indexOf(selectedTower.targetingMode);
-    const nextIndex = (currentIndex + 1) % modes.length;
-    selectedTower.setTargetingMode(modes[nextIndex]);
-    forceUpdate(n => n + 1);
-  };
-
   return (
     <div className={`absolute inset-0 pointer-events-none flex flex-col justify-between font-sans selection:bg-blue-500/30 ${isPortrait ? '' : 'p-4'}`}>
-      {/* Top Bar: Stats & Controls */}
-      <div className="flex justify-between items-start pointer-events-auto w-full max-w-5xl mx-auto">
-
-        {/* Stats */}
-        <div className={`flex gap-2 sm:gap-4 bg-slate-900/90 rounded-xl text-white border border-slate-700/50 backdrop-blur-md shadow-lg shadow-blue-500/10 ${isPortrait ? 'fixed top-0 left-0 w-full rounded-none border-x-0 border-t-0 p-3 z-50 justify-between' : 'p-2 sm:p-3'}`}>
-          <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-slate-800/50 rounded-lg border border-slate-700/30">
-            <Heart size={isPortrait ? 14 : 18} className="text-rose-500 animate-pulse" fill="currentColor" />
-            <span className={`font-bold tabular-nums ${isPortrait ? 'text-sm' : 'text-lg sm:text-xl'}`}>{gameState.lives}</span>
-          </div>
-          <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-slate-800/50 rounded-lg border border-slate-700/30">
-            <Coins size={isPortrait ? 14 : 18} className="text-amber-400" fill="currentColor" />
-            <span className={`font-bold text-amber-200 tabular-nums ${isPortrait ? 'text-sm' : 'text-lg sm:text-xl'}`}>{gameState.money}</span>
-          </div>
-          <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-slate-800/50 rounded-lg border border-slate-700/30">
-            <Activity size={isPortrait ? 14 : 18} className="text-cyan-400" />
-            <span className={`font-bold text-cyan-200 tabular-nums ${isPortrait ? 'text-sm' : 'text-lg sm:text-xl'}`}>WAVE {gameState.wave}</span>
-          </div>
-
-          {/* Active Mods Icons */}
-          {gameState.activeMods.length > 0 && (
-            <div className="flex items-center gap-1 pl-2 border-l border-slate-700/50">
-              {gameState.activeMods.map((mod, i) => (
-                <div key={i} className="w-5 h-5 sm:w-6 sm:h-6 bg-slate-800 rounded flex items-center justify-center text-[10px] text-white border border-slate-600" title={mod.name + ": " + mod.description}>
-                  <Cpu size={isPortrait ? 12 : 14} className={mod.rarity === 'LEGENDARY' ? 'text-amber-400' : mod.rarity === 'RARE' ? 'text-cyan-400' : 'text-slate-400'} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Controls */}
-        <div className="flex gap-2">
-          <button
-            onClick={toggleMute}
-            className="bg-slate-900/90 p-3 rounded-xl text-slate-400 lg:hover:text-white border border-slate-700/50 lg:hover:bg-slate-800 transition-all"
-          >
-            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-          </button>
-          <button
-            onClick={() => engine?.current?.toggleAutoStart()}
-            className={`p-3 rounded-xl border transition-all ${gameState.autoStart
-              ? 'bg-purple-500/20 text-purple-400 border-purple-500/50'
-              : 'bg-slate-900/90 text-slate-400 lg:hover:text-white border-slate-700/50 lg:hover:bg-slate-800'}`}
-            title="Auto Start Rounds"
-          >
-            <RotateCw size={20} className={gameState.autoStart ? "animate-spin-slow" : ""} />
-          </button>
-          <button
-            onClick={() => {
-              const nextSpeed = gameState.speed === 1 ? 2 : gameState.speed === 2 ? 4 : 1;
-              engine?.current?.setSpeed(nextSpeed);
-            }}
-            className={`p-3 rounded-xl border transition-all ${gameState.speed > 1
-              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
-              : 'bg-slate-900/90 text-slate-400 lg:hover:text-white border-slate-700/50 lg:hover:bg-slate-800'} relative`}
-          >
-            <div className="absolute -top-2 -right-2 bg-emerald-500 text-black text-[10px] font-bold px-1.5 rounded-full border border-emerald-400">
-              {gameState.speed}x
-            </div>
-            <FastForward size={20} fill={gameState.speed > 1 ? "currentColor" : "none"} />
-          </button>
-          <button
-            onClick={() => engine?.current?.togglePause()}
-            className={`p-3 rounded-xl border transition-all ${gameState.isPaused
-              ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
-              : 'bg-slate-900/90 text-slate-400 lg:hover:text-white border-slate-700/50 lg:hover:bg-slate-800'}`}
-          >
-            <Pause size={20} fill={gameState.isPaused ? "currentColor" : "none"} />
-          </button>
-        </div>
-      </div>
+      <TopBar gameState={gameState} engine={engine} isPortrait={isPortrait} />
 
       {/* Wave Control (Floating) */}
       {!gameState.waveActive && gameState.gameStarted && !gameState.isGameOver && !gameState.isPaused && !gameState.choosingMod && (
@@ -191,118 +106,13 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       )}
 
-      {/* Center: Selected Tower Info */}
       {selectedTower && !gameState.isGameOver && !gameState.choosingMod && (
-        <div className="pointer-events-auto self-center bg-slate-900/95 p-4 sm:p-5 rounded-2xl border border-slate-600/50 text-white w-[95%] sm:w-72 max-w-sm backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 mb-32 sm:mb-0">
-          <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-2">
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full" style={{ background: TOWERS[selectedTower.type].color, boxShadow: `0 0 10px ${TOWERS[selectedTower.type].color}` }} />
-              <h3 className="font-bold text-lg tracking-wide">{TOWERS[selectedTower.type].name.toUpperCase()}</h3>
-            </div>
-            <button onClick={onDeselect} className="text-slate-500 lg:hover:text-white transition-colors">✕</button>
-          </div>
-
-          <div className={`space-y-2 mb-6 text-sm text-slate-300 ${isPortrait ? 'text-xs' : ''}`}>
-            <div className="flex justify-between">
-              <span>Damage</span>
-              <span className="font-mono text-white">{selectedTower.damage}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Range</span>
-              <span className="font-mono text-white">{selectedTower.range}px</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Fire Rate</span>
-              <span className="font-mono text-white">{(60 / selectedTower.maxCooldown).toFixed(1)}/s</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Pierce</span>
-              <span className="font-mono text-white">{selectedTower.pierce}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Type</span>
-              <span className="font-mono text-white text-[10px] bg-slate-800 px-1 rounded">{selectedTower.damageType}</span>
-            </div>
-            <div className="flex justify-between border-t border-slate-700/50 pt-2 mt-2">
-              <span className="text-emerald-400 font-bold">Pops / Income</span>
-              <span className="font-mono text-white font-bold">{Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(Math.floor(selectedTower.pops))}</span>
-            </div>
-            {selectedTower.camoDetection && (
-              <div className="flex justify-between text-emerald-400">
-                <span>Camo Detect</span>
-                <span className="font-mono">ACTIVE</span>
-              </div>
-            )}
-          </div>
-
-          {/* Targeting Control */}
-          <button
-            onClick={cycleTargetingMode}
-            className="w-full mb-4 bg-slate-800 lg:hover:bg-slate-700 border border-slate-600 p-3 rounded-lg flex items-center justify-between group transition-colors"
-          >
-            <div className="flex items-center gap-2 text-slate-300">
-              <Crosshair size={16} />
-              <span className="text-xs font-bold uppercase">Target Priority</span>
-            </div>
-            <span className="font-mono text-cyan-400 font-bold">{selectedTower.targetingMode}</span>
-          </button>
-
-          <div className="flex gap-2">
-            <button
-              onClick={onSellTower}
-              className="w-full bg-rose-500/20 lg:hover:bg-rose-500/30 text-rose-400 lg:hover:text-rose-200 border border-rose-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group"
-            >
-              <span>SELL</span>
-              <span className="bg-rose-950/50 px-2 py-0.5 rounded text-xs font-mono lg:group-hover:bg-rose-900/50">
-                +${Math.floor(selectedTower.totalSpent * 0.7)}
-              </span>
-            </button>
-
-            {selectedTower.level < 2 ? (
-              <button
-                onClick={() => { engine?.current?.upgradeTower(selectedTower); forceUpdate(n => n + 1); }}
-                disabled={gameState.money < selectedTower.upgradeCost}
-                className={`w-full bg-amber-500/20 lg:hover:bg-amber-500/30 text-amber-400 lg:hover:text-amber-200 border border-amber-500/30 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 group ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <span>UPGRADE</span>
-                <span className="bg-amber-950/50 px-2 py-0.5 rounded text-xs font-mono lg:group-hover:bg-amber-900/50">
-                  -${selectedTower.upgradeCost}
-                </span>
-              </button>
-            ) : selectedTower.level === 2 ? (
-              <div className="flex flex-col gap-2 w-full">
-                <span className="text-xs text-center text-slate-400 font-bold tracking-widest mt-1">CHOOSE PATH</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => { engine?.current?.upgradeTower(selectedTower, 'A'); forceUpdate(n => n + 1); }}
-                    disabled={gameState.money < selectedTower.upgradeCost}
-                    className={`flex-1 bg-blue-600/40 lg:hover:bg-blue-600/60 text-blue-200 border border-blue-500/50 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95'}`}
-                  >
-                    <span>PATH A (TOP)</span>
-                    <span className="bg-blue-950/80 px-2 py-0.5 rounded text-[10px] font-mono text-blue-300">-${selectedTower.upgradeCost}</span>
-                  </button>
-                  <button
-                    onClick={() => { engine?.current?.upgradeTower(selectedTower, 'B'); forceUpdate(n => n + 1); }}
-                    disabled={gameState.money < selectedTower.upgradeCost}
-                    className={`flex-1 bg-fuchsia-600/40 lg:hover:bg-fuchsia-600/60 text-fuchsia-200 border border-fuchsia-500/50 py-2 rounded font-semibold text-xs flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(192,38,211,0.3)] transition-all ${gameState.money < selectedTower.upgradeCost ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95'}`}
-                  >
-                    <span>PATH B (BTM)</span>
-                    <span className="bg-fuchsia-950/80 px-2 py-0.5 rounded text-[10px] font-mono text-fuchsia-300">-${selectedTower.upgradeCost}</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="w-full bg-slate-800 text-slate-500 py-2.5 rounded-lg font-bold text-center border border-slate-700">
-                MAX LEVEL
-              </div>
-            )}
-          </div>
-        </div>
+        <TowerPanel tower={selectedTower} gameState={gameState} engine={engine} isPortrait={isPortrait} onSell={onSellTower} onClose={onDeselect} />
       )}
 
       {/* Placement Controls */}
       {selectedTowerType && !gameState.isGameOver && (
-        <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
           <button
             onClick={onCancelPlacement}
             className="bg-slate-800/80 lg:hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 lg:hover:border-red-400 transition-all backdrop-blur-sm active:scale-95"
@@ -319,8 +129,8 @@ export const HUD: React.FC<HUDProps> = ({
       )}
 
       {/* Special Abilities */}
-      {gameState.gameStarted && !gameState.isGameOver && !gameState.choosingMod && (
-        <div className="absolute bottom-28 sm:bottom-32 right-4 pointer-events-auto z-20">
+      {gameState.gameStarted && !gameState.isGameOver && !gameState.choosingMod && !(isPortrait && selectedTower) && (
+        <div className="absolute bottom-24 right-4 pointer-events-auto z-20">
           <button
             onClick={() => engine?.current?.activateAbility('ORBITAL_STRIKE')}
             disabled={gameState.money < 500}
@@ -335,80 +145,7 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       )}
 
-      {/* Bottom Bar (or Side Bar in Portrait): Tower Selection */}
-      <div className={`
-        pointer-events-auto pb-4 sm:pb-4 overflow-x-auto no-scrollbar
-        ${isPortrait
-          ? `fixed right-0 top-[70px] bottom-0 w-[60px] bg-slate-900 border-l border-slate-800 flex flex-col gap-2 overflow-y-auto items-center pt-2 z-40`
-          : 'flex justify-start sm:justify-center gap-3 sm:gap-4 w-full px-4 sm:px-4'}
-      `}>
-        {Object.entries(TOWERS).map(([key, tower]) => {
-          const isSelected = selectedTowerType === key;
-          const canAfford = gameState.money >= tower.cost;
-
-          return (
-            <button
-              key={key}
-              onClick={() => onSelectTower(isSelected ? null : key as TowerType)}
-              disabled={!canAfford}
-              className={`
-                  relative group flex flex-col items-center rounded-xl border transition-all duration-200 flex-shrink-0
-                  ${isPortrait
-                  ? 'p-1 min-w-[50px] w-12'
-                  : 'p-3 sm:p-3 min-w-[90px] sm:min-w-[100px]'}
-                  ${isSelected
-                  ? 'bg-slate-800 border-blue-400 ring-2 ring-blue-500/50 shadow-[0_10px_25px_-5px_rgba(59,130,246,0.5)]' + (isPortrait ? ' -translate-x-0' : ' -translate-y-2')
-                  : 'bg-slate-900/80 border-slate-700 lg:hover:border-slate-500 lg:hover:bg-slate-800'}
-                  ${!canAfford ? 'opacity-40 cursor-not-allowed grayscale' : ''}
-                `}
-            >
-              <div
-                className={`${isPortrait ? 'w-8 h-8 mb-1' : 'w-10 h-10 sm:w-12 sm:h-12 mb-1 sm:mb-3'} rounded-lg shadow-lg flex items-center justify-center transition-transform group-active:scale-95 lg:group-hover:scale-110`}
-                style={{ backgroundColor: skinTowerColor(key as TowerType, tower.color), boxShadow: isSelected ? `0 0 15px ${skinTowerColor(key as TowerType, tower.color)}` : 'none' }}
-              >
-                {/* Simple Icon Representation */}
-                {key === 'BASIC' && <div className="w-4 h-4 bg-white rounded-full" />}
-                {key === 'SNIPER' && <div className="w-6 h-1 bg-white" />}
-                {key === 'RAPID' && <div className="flex gap-0.5"><div className="w-1 h-4 bg-white" /><div className="w-1 h-4 bg-white" /><div className="w-1 h-4 bg-white" /></div>}
-                {key === 'FROST' && <div className="w-4 h-4 bg-white rotate-45" />}
-                {key === 'SPLASH' && <div className="w-5 h-3 bg-white" />}
-                {key === 'LASER' && <div className="w-6 h-0.5 bg-white" />}
-                {key === 'TESLA' && <Zap size={24} className="text-white fill-current" />}
-                {key === 'TACK' && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center"><div className="w-1.5 h-1.5 bg-slate-900 rounded-full" /></div>}
-                {key === 'BEACON' && <div className="w-3 h-3 border-2 border-white rounded-sm" />}
-                {key === 'FARM' && <div className="w-4 h-4 bg-white" />}
-                {key === 'PLASMA' && <div className="w-6 h-6 rounded-full border-2 border-white bg-violet-300" />}
-              </div>
-
-              <span className={`font-bold ${isPortrait ? 'text-[9px] tracking-tight' : 'text-xs sm:text-sm tracking-wider'} mb-0.5 ${isSelected ? 'text-white' : 'text-slate-300'}`}>
-                {tower.name.toUpperCase()}
-              </span>
-              <span className={`font-mono ${isPortrait ? 'text-[9px]' : 'text-xs'} ${canAfford ? 'text-amber-400' : 'text-slate-500'}`}>
-                ${tower.cost}
-              </span>
-
-              {/* Stats Popup - Disable/Hide on Portrait mobile to avoid clutter */}
-              {!isPortrait && (
-                <div className="absolute bottom-full mb-4 hidden lg:group-hover:block w-48 bg-slate-900/95 text-white text-xs p-3 rounded-lg border border-slate-600 shadow-xl z-20 backdrop-blur-sm pointer-events-none">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-slate-400">Damage</span>
-                    <span className="font-mono text-emerald-400">{tower.damage}</span>
-                  </div>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-slate-400">Range</span>
-                    <span className="font-mono text-blue-400">{tower.range}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Cooldown</span>
-                    <span className="font-mono text-amber-400">{tower.cooldown}f</span>
-                  </div>
-                  <div className="absolute bottom-[-5px] left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-b border-r border-slate-600 rotate-45"></div>
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div >
+      <TowerBar gameState={gameState} selectedTowerType={selectedTowerType} onSelectTower={onSelectTower} isPortrait={isPortrait} />
 
       {/* Start Game Overlay */}
       {!gameState.gameStarted && !gameState.isGameOver && (

@@ -223,11 +223,11 @@ export class Tower implements ITower {
         let metric = 0;
         switch (this.targetingMode) {
             case TowerTargetingMode.FIRST:
-                metric = e.waypointIndex;
+                metric = e.distanceTraveled;
                 if (metric > bestMetric) { bestMetric = metric; target = e; }
                 break;
             case TowerTargetingMode.LAST:
-                metric = e.waypointIndex;
+                metric = e.distanceTraveled;
                 if (metric < bestMetric) { bestMetric = metric; target = e; }
                 break;
             case TowerTargetingMode.STRONGEST:

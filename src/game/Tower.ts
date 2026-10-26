@@ -77,10 +77,8 @@ export class Tower implements ITower {
         if (this.statusEffect) {
             this.statusEffect.strength *= 1.2; // Buff effect
         }
-        if (this.type === 'SNIPER') this.camoDetection = true; // Sniper gets Camo at level 2
     } else if (this.level === 3) {
         // Advanced Upgrades
-        this.camoDetection = true; // All towers get Camo at level 3
 
         if (this.type === 'BASIC') {
             if (path === 'A') {
@@ -88,6 +86,7 @@ export class Tower implements ITower {
             } else {
                 this.damage = Math.ceil(this.damage * 2.5); // Heavy Caliber
                 this.pierce += 3;
+                this.camoDetection = true; // Night Vision Optics
             }
         } else if (this.type === 'SNIPER') {
             if (path === 'A') {
@@ -96,6 +95,7 @@ export class Tower implements ITower {
                 this.damageType = DamageType.ENERGY;
             } else {
                 this.maxCooldown = Math.floor(this.maxCooldown * 0.4); // Semi-Auto
+                this.camoDetection = true; // Night Vision Goggles
             }
         } else if (this.type === 'SPLASH') {
             if (path === 'A') {
@@ -109,6 +109,7 @@ export class Tower implements ITower {
             if (path === 'A') {
                 this.damage = Math.ceil(this.damage * 2); // Laser Tip
                 this.damageType = DamageType.ENERGY;
+                this.camoDetection = true; // Advanced Targeting
             } else {
                 this.maxCooldown = Math.max(1, Math.floor(this.maxCooldown * 0.5)); // Overdrive
             }

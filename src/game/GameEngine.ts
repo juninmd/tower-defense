@@ -212,6 +212,7 @@ export class GameEngine {
     }
 
         startWave() {
+        if (this.state.waveActive || this.state.isGameOver) return;
         if (this.state.wave > 1 && (this.state.wave - 1) % 5 === 0 && !this.state.choosingMod && this.lastModWave !== this.state.wave) {
             this.triggerModSelection();
             return;
@@ -525,16 +526,17 @@ export class GameEngine {
         // Check lives and removal
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             if (this.enemies[i].reachedEnd) {
-                this.state.lives--;
+                this.state.lives = Math.max(0, this.state.lives - 1);
                 this.createFloatingText(this.enemies[i].position, "-1 HP", "#F43F5E");
                 this.shakeIntensity = 10;
                 soundManager.playHit();
                 this.enemies.splice(i, 1);
                 this.notifyState();
-                if (this.state.lives <= 0) {
+                if (this.state.lives <= 0 && !this.state.isGameOver) {
                     this.state.isGameOver = true;
                     soundManager.playGameOver();
                     this.notifyState(true);
+                    break;
                 }
             }
         }

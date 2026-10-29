@@ -225,11 +225,7 @@ export class GameEngine {
     }
 
     triggerModSelection() {
-        // Pick 3 random mods not already active (duplicates allowed? maybe not for some)
-        // Let's allow duplicates for stats, but maybe filter unique ones if needed.
-        // For now, random 3.
-        const shuffled = [...MODS].sort(() => 0.5 - Math.random());
-        this.modOptions = shuffled.slice(0, 3);
+        this.modOptions = drawModOptions(3, this.state.activeMods);
         this.state.modOptions = this.modOptions; // Sync to state
         this.state.choosingMod = true;
         this.notifyState();

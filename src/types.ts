@@ -18,6 +18,7 @@ export interface IEnemy extends GameEntity {
   reachedEnd: boolean;
   reward: number;
   defenseType: DefenseType;
+  distanceTraveled: number;
 }
 
 import { type Enemy } from './game/Enemy';

@@ -222,26 +222,37 @@ export class Tower implements ITower {
         if (dist > (this.range * this.rangeBuff)) continue;
 
         let metric = 0;
+        const tiebreaker = e.distanceTraveled;
+
         switch (this.targetingMode) {
             case TowerTargetingMode.FIRST:
-                metric = e.waypointIndex;
+                metric = e.distanceTraveled;
                 if (metric > bestMetric) { bestMetric = metric; target = e; }
                 break;
             case TowerTargetingMode.LAST:
-                metric = e.waypointIndex;
+                metric = e.distanceTraveled;
                 if (metric < bestMetric) { bestMetric = metric; target = e; }
                 break;
             case TowerTargetingMode.STRONGEST:
                 metric = e.hp;
-                if (metric > bestMetric) { bestMetric = metric; target = e; }
+                if (metric > bestMetric || (metric === bestMetric && tiebreaker > (target ? (target as Enemy).distanceTraveled : -1))) {
+                    bestMetric = metric;
+                    target = e;
+                }
                 break;
             case TowerTargetingMode.WEAKEST:
                 metric = e.hp;
-                if (metric < bestMetric) { bestMetric = metric; target = e; }
+                if (metric < bestMetric || (metric === bestMetric && tiebreaker > (target ? (target as Enemy).distanceTraveled : -1))) {
+                    bestMetric = metric;
+                    target = e;
+                }
                 break;
             case TowerTargetingMode.CLOSEST:
                 metric = dist;
-                if (metric < bestMetric) { bestMetric = metric; target = e; }
+                if (metric < bestMetric || (metric === bestMetric && tiebreaker > (target ? (target as Enemy).distanceTraveled : -1))) {
+                    bestMetric = metric;
+                    target = e;
+                }
                 break;
         }
     }

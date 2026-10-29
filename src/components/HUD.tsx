@@ -29,7 +29,7 @@ interface HUDProps {
   isPortrait?: boolean;
 }
 
-export const HUD: React.FC<HUDProps> = ({
+export const HUD: React.FC<HUDProps> = React.memo(({
   gameState,
   engine,
   selectedTowerType,
@@ -234,4 +234,4 @@ export const HUD: React.FC<HUDProps> = ({
 
     </div >
   );
-};
+});

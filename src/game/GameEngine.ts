@@ -490,7 +490,7 @@ export class GameEngine {
             this.state.waveActive = false;
 
             // End of Wave Cash Bonus (BTD6 Mechanic)
-            const waveBonus = 100 + this.state.wave * 2;
+            const waveBonus = 100 + this.state.wave;
             this.state.money += waveBonus;
             this.applyEndOfWaveMods();
             if (this.state.autoStart) {

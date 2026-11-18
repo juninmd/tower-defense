@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.4",
-    "lucide-react": "^1.66.0",
+    "lucide-react": "^1.71.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "tailwindcss": "^4.3.4"
@@ -29,8 +29,8 @@
     "globals": "^17.14.0",
     "ts-node": "^10.9.2",
     "typescript": "~7.0.2",
-    "typescript-eslint": "^8.72.1",
-    "vite": "^8.3.5",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.8",
     "vite-plugin-pwa": "^2.0.0"
   },
   "packageManager": "pnpm@10.34.5",

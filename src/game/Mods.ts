@@ -4,6 +4,7 @@ export interface Mod {
   description: string;
   icon: string;
   unique?: boolean;
+  rarity?: 'COMMON' | 'RARE' | 'LEGENDARY';
 }
 
 export const MODS: Mod[] = [

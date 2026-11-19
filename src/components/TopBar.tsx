@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mod } from '../game/Mods';
+import type { Mod } from '../game/Mods';
 
 interface TopBarProps {
   activeMods: Mod[];

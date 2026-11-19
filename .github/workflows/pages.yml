@@ -17,6 +17,8 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec vite build --base=/tower-defense/
+      # SPA fallback: Pages serves 404.html for unknown paths
+      - run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v6
         with: { enablement: true }
       - uses: actions/upload-pages-artifact@v5

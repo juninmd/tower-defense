@@ -193,7 +193,7 @@ export const HUD: React.FC<HUDProps> = React.memo(({
                           mod.rarity === 'RARE' ? 'bg-cyan-500/20 text-cyan-400' :
                             'bg-slate-700 text-slate-300'}
                                 `}>
-                        {mod.rarity}
+                        {mod.rarity ?? 'COMMON'}
                       </span>
                     </div>
 

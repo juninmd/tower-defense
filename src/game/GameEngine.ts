@@ -9,7 +9,7 @@ import { QuadTree } from './QuadTree';
 import { Vector2 } from './Vector';
 import { TOWERS, type TowerType, DamageType, DefenseType, ENEMIES } from './Constants';
 import { soundManager } from './SoundManager';
-import { type Mod, MODS } from './Mods';
+import { drawModOptions, type Mod, MODS } from './Mods';
 import { WaveManager } from './systems/WaveManager';
 import { InputManager } from './systems/InputManager';
 import { ProjectileSystem } from './systems/ProjectileSystem';
@@ -225,7 +225,7 @@ export class GameEngine {
     }
 
     triggerModSelection() {
-        this.modOptions = drawModOptions(3, this.state.activeMods);
+        this.modOptions = drawModOptions(MODS, this.state.activeMods);
         this.state.modOptions = this.modOptions; // Sync to state
         this.state.choosingMod = true;
         this.notifyState();

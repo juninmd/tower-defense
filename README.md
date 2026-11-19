@@ -75,7 +75,7 @@ pnpm run lint
 ```
 
 > [!WARNING]
-> On `master`, `pnpm run build` and `pnpm run lint` exit with an error: an unused `useState` import in `src/components/HUD.tsx` fails both `tsc -b` and `eslint .`.
+> `pnpm run lint` still fails at startup: `typescript-eslint` 8.x rejects TypeScript 7 (`typescript-eslint does not support TS 7.0`). `pnpm run build` passes.
 
 ## 🛡️ Antigravity Protocol
 
@@ -87,7 +87,7 @@ This project follows the **Antigravity** code standards:
 
 ## 🚧 Known Limitations
 
-- The build and lint scripts currently fail (see the warning above); the Vite dev server runs.
+- The lint script currently fails (see the warning above); build and the Vite dev server run.
 - No automated test suite is wired into `package.json`. `verification/` holds Python and Playwright scripts that are not run by any script.
 - Two lockfiles are committed: `pnpm-lock.yaml` (used by the Dockerfile and `pnpm install --frozen-lockfile`) and `package-lock.json`.
 

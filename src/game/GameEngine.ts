@@ -873,7 +873,7 @@ export class GameEngine {
 
         handleClick(x: number, y: number): Tower | null {
         this.inputManager.updateMouse(x, y);
-        const action = this.inputManager.handleClick(this.towers, this.state.money);
+        const action = this.inputManager.handleClick(this.towers);
 
         if (action) {
             if (action.action === 'PLACE') {

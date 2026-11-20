@@ -86,8 +86,13 @@ export class GameEngine {
     private autoStartTimer: number = 0;
     modOptions: Mod[] = [];
     isRunning: boolean = true;
-    placementMode: TowerType | null = null;
-    mousePosition: Vector2 = new Vector2(0, 0);
+    // InputManager owns placement mode and pointer: RenderSystem draws the ghost from it.
+    get placementMode(): TowerType | null {
+        return this.inputManager.placementMode;
+    }
+    get mousePosition(): Vector2 {
+        return this.inputManager.mousePosition;
+    }
     backgroundCanvas: HTMLCanvasElement | null = null;
 
     private lastModWave: number = 0;
@@ -873,7 +878,7 @@ export class GameEngine {
 
         handleClick(x: number, y: number): Tower | null {
         this.inputManager.updateMouse(x, y);
-        const action = this.inputManager.handleClick(this.towers, this.state.money);
+        const action = this.inputManager.handleClick(this.towers);
 
         if (action) {
             if (action.action === 'PLACE') {
@@ -896,17 +901,17 @@ export class GameEngine {
     }
 
     setPlacementMode(type: TowerType | null) {
-        this.placementMode = type;
+        this.inputManager.setPlacementMode(type);
     }
 
     updateMouse(pos: Vector2) {
-        this.mousePosition = pos;
+        this.inputManager.updateMouse(pos.x, pos.y);
     }
 
     confirmPlacement(): boolean {
         if (this.placementMode) {
             if (this.placeTower(this.mousePosition, this.placementMode)) {
-                this.placementMode = null;
+                this.inputManager.setPlacementMode(null);
                 return true;
             }
         }
@@ -914,6 +919,6 @@ export class GameEngine {
     }
 
     cancelPlacement() {
-        this.placementMode = null;
+        this.inputManager.setPlacementMode(null);
     }
 }

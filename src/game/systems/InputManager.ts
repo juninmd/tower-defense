@@ -21,14 +21,10 @@ export class InputManager {
         this.placementMode = type;
     }
 
-    handleClick(towers: Tower[], money: number): { action: 'PLACE', type: TowerType, pos: Vector2 } | { action: 'SELECT', tower: Tower } | null {
+    handleClick(towers: Tower[]): { action: 'PLACE', type: TowerType, pos: Vector2 } | { action: 'SELECT', tower: Tower } | null {
         if (this.placementMode) {
-            const cost = TOWERS[this.placementMode].cost;
-            if (money >= cost) {
-                // The GameEngine handles placement validation, so we just return the action.
-                return { action: 'PLACE', type: this.placementMode, pos: this.mousePosition };
-            }
-            return null;
+            // GameEngine.placeTower checks the price (DISCOUNT included) and the spot.
+            return { action: 'PLACE', type: this.placementMode, pos: this.mousePosition };
         } else {
             // Select tower
             for (const t of towers) {

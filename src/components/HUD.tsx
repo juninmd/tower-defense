@@ -112,12 +112,16 @@ export const HUD: React.FC<HUDProps> = React.memo(({
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-auto z-30">
           <button
             onClick={onCancelPlacement}
+            aria-label="Cancel placement"
+            title="Cancel placement (Esc)"
             className="bg-slate-800/80 lg:hover:bg-red-500 text-white p-4 rounded-full shadow-lg border-2 border-slate-600 lg:hover:border-red-400 transition-all backdrop-blur-sm active:scale-95"
           >
             <X size={28} />
           </button>
           <button
             onClick={onConfirmPlacement}
+            aria-label="Confirm placement"
+            title="Confirm placement"
             className="bg-emerald-500 lg:hover:bg-emerald-400 text-white p-4 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] border-2 border-emerald-300 transition-all lg:hover:scale-110 active:scale-95"
           >
             <Check size={32} />

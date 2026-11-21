@@ -221,7 +221,7 @@ export class Tower implements ITower {
         const dist = this.position.distanceTo(e.position);
         if (dist > (this.range * this.rangeBuff)) continue;
 
-        let metric = 0;
+        let metric: number;
         const tiebreaker = e.distanceTraveled;
 
         switch (this.targetingMode) {

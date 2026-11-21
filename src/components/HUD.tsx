@@ -13,6 +13,7 @@ import { WavePanel } from './hud/WavePanel';
 import { GameOver } from './hud/GameOver';
 import { WaveBanner } from './hud/WaveBanner';
 import { THEMES } from '../game/MapThemes';
+import { isShortcutIgnored } from './shortcuts';
 
 interface HUDProps {
   gameState: GameState;
@@ -48,6 +49,8 @@ export const HUD: React.FC<HUDProps> = React.memo(({
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if Mod Selection or Game Over
       if (gameState.isGameOver || gameState.choosingMod) return;
+      if (isShortcutIgnored(e)) return;
+      if (e.key === ' ') e.preventDefault(); // no page scroll on mobile/desktop
 
       switch (e.key) {
         case ' ':

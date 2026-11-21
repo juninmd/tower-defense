@@ -42,9 +42,9 @@ describe('Mods System', () => {
 
     // Simulate applying RANGE_BOOST 3 times to existing
     count++;
-    const existingRange1 = applyStatMods(baseRange, count);
+    applyStatMods(baseRange, count);
     count++;
-    const existingRange2 = applyStatMods(baseRange, count);
+    applyStatMods(baseRange, count);
     count++;
     const existingRange3 = applyStatMods(baseRange, count);
 

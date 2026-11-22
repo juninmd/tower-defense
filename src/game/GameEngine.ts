@@ -366,14 +366,14 @@ export class GameEngine {
 
                 for (let i = 0; i < 20; i++) {
                     this.particles.push(this.particlePool.get(
-                        new Vector2(Math.random() * this.canvas.width, Math.random() * this.canvas.height),
+                        new Vector2(Math.random() * this.width, Math.random() * this.height),
                         '#FFF',
                         5,
                         5
                     ));
                 }
 
-                this.createFloatingText(new Vector2(this.canvas.width / 2, this.canvas.height / 2), "ORBITAL STRIKE", "#FFF");
+                this.createFloatingText(new Vector2(this.width / 2, this.height / 2), "ORBITAL STRIKE", "#FFF");
                 this.shakeIntensity = 20;
                 soundManager.playExplosion();
 

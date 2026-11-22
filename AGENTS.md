@@ -1,41 +1,47 @@
-# 🧠 AGENTS.md - Neon Defense Intelligence System
+# AGENTS.md
 
-## 👤 AI Personas
+Neon Defense: a tower defense game in React 19, TypeScript and HTML5 Canvas, with a flat neon style. The game loop lives in a plain Canvas engine; React renders only the HUD and menus.
 
-### 1. Jules-Architect (System Architect)
-- **Role**: Designing the core game loop and entity management.
-- **Focus**: Performance optimization (Object Pooling), state synchronization, and engine robustness.
-- **Vibe**: Direct, performance-obsessed, and strategic.
+## Stack
 
-### 2. Spark-Frontend (HUD Designer)
-- **Role**: Building the React-based HUD and menus.
-- **Focus**: Visual clarity, TailwindCSS 4 patterns, compact and responsive UI scaling for mobile, and "Neon" aesthetic consistency (e.g., pulsating range rings).
-- **Vibe**: Modern, creative, and UI-focused.
+- Vite, React, TypeScript, Tailwind CSS v4, `vite-plugin-pwa`, ESLint, Playwright (verification scripts).
+- Procedural audio via Web Audio API (`SoundManager`).
 
-### 3. Neon-Engine (Physics & VFX Expert)
-- **Role**: Logic for collisions, pathfinding, and particle systems.
-- **Focus**: Canvas API mastery, status effects (BURN, SLOW), and smooth animations.
-- **Vibe**: Technical, precise, and fast.
+## Commands
 
-## 📜 Development Rules (Antigravity)
+```bash
+pnpm install
+pnpm dev                 # Vite dev server on :5173
+pnpm build               # tsc -b && vite build
+pnpm lint                # eslint .
+pnpm preview             # serve the production build
+python verification/verify.py        # Playwright checks; needs `pnpm dev` running on :5173
+python verification/verify_hud.py    # HUD checks; same requirement
+```
 
-1. **Size Limit**: **Max 180 lines per file**. Core logic is modularized across `GameEngine`, `Entity`, and `StatusEffects`.
-2. **Object Pooling**: Never instantiate `new Projectile()` inside the game loop. Use the pool.
-3. **NotifyState**: Always call `notifyState()` when changing money, lives, or waves to keep the HUD in sync.
-4. **Pure Canvas**: No heavy CSS filters in the game loop; use native Canvas shadows sparingly.
+## Structure
 
-## 🤝 Interaction Protocol
-- Follow the **Plan -> Act -> Validate** cycle for new tower types.
-- Validation must include a performance check on low-end device simulations.
+- `src/game/GameEngine.ts`: core loop, canvas rendering, entity management.
+- `src/game/`: entities (`Tower`, `Enemy`, `Projectile`, `Particle`), `StatusEffects.ts`, `Mods.ts` (roguelite upgrades), `Maps.ts`, `Skins.ts`, `ObjectPool.ts`, `SoundManager.ts`.
+- `src/game/systems/`: `InputManager`, `ProjectileSystem`, `RenderSystem`, `WaveManager`.
+- `src/components/`: React HUD (`HUD.tsx`, `hud/`), `StartMenu.tsx`, `TopBar.tsx`.
+- `verification/`: Playwright scripts and their outputs. `public/`: PWA manifest and icons.
 
-<!-- base-actions-main-policy -->
-## GitHub Actions — padrão obrigatório (@main)
+## Conventions
 
-- Referencie as actions internas sempre pelo branch, nunca por SHA:
-  - `uses: juninmd/base-actions/<action>@main`
-  - `uses: juninmd/base-actions/.github/workflows/<arquivo>.yml@main`
-- Não fixe `@<sha>` em `juninmd/base-actions`: a atualização é centralizada no
-  `main` e passa a valer no próximo run.
-- PRs cujos checks não iniciam por billing/spending limit são mesclados pelo bot central
-  `juninmd/base-actions/.github/workflows/auto-merge-billing-blocked.yml`.
-  Para impedir o merge automático de um PR, aplique a label `do-not-merge`.
+- Max 180 lines per file. Logic is split across `GameEngine`, entity classes and `StatusEffects`.
+- Object pooling: never `new Projectile()` (or other high-frequency entity) inside the game loop. Use `ObjectPool`.
+- Call `notifyState()` whenever money, lives, waves or active mods change, so the HUD stays in sync.
+- Pure Canvas: no heavy CSS filters in the game loop. Use native canvas shadows sparingly.
+- Keep the flat neon style. No realistic textures (see `GEMINI.md`).
+- New tower types follow Plan, then Act, then Validate. Validation includes a performance check on low-end device simulation.
+- GitHub Actions: <!-- base-actions-main-policy -->
+  - Reference internal actions by branch, never by SHA: `uses: juninmd/base-actions/<action>@main` and `uses: juninmd/base-actions/.github/workflows/<file>.yml@main`.
+  - Do not pin `@<sha>` for `juninmd/base-actions`; updates are centralized on `main`.
+  - PRs whose checks do not start because of billing or spending limits are auto-merged by `juninmd/base-actions/.github/workflows/auto-merge-billing-blocked.yml`. Apply the `do-not-merge` label to block that.
+
+## Gotchas
+
+- `src/components/TopBar.spec.ts` and `src/game/*.test.ts` / `*.spec.ts` exist, but no test runner is in `package.json`. No script runs them. Do not claim they pass.
+- `pages.yml` deploys to GitHub Pages on every push to `master`. A merge publishes the site.
+- Playwright scripts need the dev server running first (`pnpm dev`).

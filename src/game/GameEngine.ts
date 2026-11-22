@@ -98,6 +98,7 @@ export class GameEngine {
     private lastModWave: number = 0;
     private lastTime: number = 0;
     private lastNotifyTime: number = 0;
+    private trailingNotify: ReturnType<typeof setTimeout> | undefined;
     private accumulator: number = 0;
     private readonly TIMESTEP: number = 1000 / 60; // 60 FPS Logic
     private onStateChange: (state: GameState) => void;
@@ -161,6 +162,7 @@ export class GameEngine {
 
     destroy() {
         this.isRunning = false;
+        clearTimeout(this.trailingNotify);
         window.removeEventListener('resize', this.handleResize);
     }
 
@@ -871,8 +873,16 @@ export class GameEngine {
     private notifyState(immediate: boolean = false) {
         const now = performance.now();
         if (immediate || now - this.lastNotifyTime > 32) { // ~30 FPS throttle
+            clearTimeout(this.trailingNotify);
+            this.trailingNotify = undefined;
             this.onStateChange({ ...this.state });
             this.lastNotifyTime = now;
+        } else if (this.trailingNotify === undefined) {
+            // Trailing flush so the last change inside the window is not lost.
+            this.trailingNotify = setTimeout(() => {
+                this.trailingNotify = undefined;
+                if (this.isRunning) this.notifyState(true);
+            }, 33 - (now - this.lastNotifyTime));
         }
     }
 
